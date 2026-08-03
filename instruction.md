@@ -1,245 +1,239 @@
-Build a modern, premium one-page landing page for Codiva Builders' Summer Innovation Academy. it should be a separate page with /summer 
+Update the Codiva Builders Home Page to clearly showcase all of our programs in a way that is easy for parents to understand and navigate.
 
-The design should feel clean, bright, and trustworthy, using a white background with the existing designs on the home page. The audience is parents looking for a high-quality technology and innovation program for their children. The overall experience should feel more like a premium academy than a typical coding school.
+Do not redesign the entire website. Keep the existing branding, colors, typography, layout, and visual identity. Simply improve the homepage by adding a dedicated "Our Programs" section.
 
-Hero Section
+Our Programs Section
 
-Headline:
+Create a modern, responsive section titled:
 
-Summer Innovation Academy 2026
-
-Subheadline:
-
-A 4-week hands-on technology program where children learn to create with technology, build real projects, explore AI, and develop future-ready skills.
-
-Call-to-action button:
-
-Register Your Child
-
-Include a professional hero image of happy children working on laptops in a modern classroom.
-
-Display quick highlights:
-
-📅 4 Weeks
-🗓 Monday – Friday
-🕘 9:00 AM – 12:00 PM
-💻 20 Live Sessions
-👧 Ages 6–17
-🎓 Demo Day & Certificate
-💰 ₦50,000
-Why Choose Codiva Builders
-
-Section title:
-
-Why Parents Choose Codiva Builders
-
-Include cards with icons:
-
-Project-Based Learning
-AI & Future Skills
-Coding & Digital Creativity
-Small Interactive Classes
-Experienced Instructors
-Student Portfolio
-Parent Progress Updates
-End-of-Camp Demo Day
-Learning Tracks
-
-Display three beautiful cards.
-
-Junior Builders (Ages 6–8)
-
-Theme:
-
-Imagine & Create
-
-Students explore:
-
-Scratch
-Digital Art
-Storytelling
-Creative Games
-Basic AI Exploration
-presentation skills
-
-
-
-Intermediate Builders (Ages 9–12)
-
-Theme:
-
-Design & Build
-
-Students explore:
-
-Scratch
-Canva
-HTML & CSS
-AI Tools
-Creative Projects
-presentation skills
-Entrepreneurship
-
-
-Senior Builders (Ages 13–17)
-
-Theme:
-
-Build & Innovate
-
-Students explore:
-
-HTML & CSS
-Beginner Python
-AI Tools
-UI/UX Basics
-presentation skills
-Entrepreneurship
-Program Schedule
-
-Display as a timeline.
-
-Duration
-4 Weeks
-
-Schedule
-Monday – Friday
-
-Time
-9:00 AM – 12:00 PM
-
-Final Day
-Demo Day & Certificate Presentation
-
-What Every Child Will Gain
-
-Use icons.
-
-Build real projects
-Improve creativity
-Learn coding fundamentals
-Explore Artificial Intelligence
-Build confidence
-Presentation skills
-Digital portfolio
-Certificate of Completion
-Registration Form
-
-This should be the main conversion section.
-
-Title:
-
-Reserve Your Child's Spot
+Our Programs
 
 Subtitle:
 
-Limited spaces available.
+Choose the learning experience that's right for your child. Whether it's a school-term program, holiday camp, or personalized coaching, every program is designed to help children build confidence, creativity, and future-ready technology skills.
 
-Fields:
+Display the programs as premium clickable cards in a responsive grid.
 
-Parent / Guardian Name
+Each card should include:
 
-Child's Full Name
+An icon or illustration
+Program name
+Short description
+Age group (where applicable)
+Duration
+Schedule
+Starting price
+A "Learn More" button
+Program 1
 
-Child's Age
+🏫 Builder Academy
 
-Dropdown options:
+Description
 
-6
-7
-8
-9
-10
-11
-12
-13
-14
-15
-16
-17
+Our flagship school-term program where children learn coding, AI, digital creativity, and problem-solving through hands-on projects.
 
-Automatically determine the learning track based on age:
+Details
 
-Ages 6–8 → Junior Builders
-Ages 9–12 → Intermediate Builders
-Ages 13–17 → Senior Builders
+Ages 6–17
+12-week school term
+Saturdays
+Certificate
+Demo Day
 
-Display the assigned track after selection.
+Price:
 
-Example:
+From ₦40,000 per term
 
-Assigned Track
-Intermediate Builders
+Button:
 
-WhatsApp Number
+Learn More
 
-Include country code selector.
+Link:
 
-Default:
+/builder-academy
 
-+234
+Program 2
 
-Email Address
+☀️ Summer Innovation Academy
 
-Optional:
+Description
 
-Preferred Campus (if multiple locations exist)
+A fun and immersive 4-week holiday experience where children build games, websites, creative projects, and explore AI.
 
-Checkbox:
+Details
 
-I agree to receive updates from Codiva Builders.
+Ages 6–17
+4 Weeks
+Monday–Friday
+9:00 AM–12:00 PM
 
-Primary Button:
+Price:
+
+₦50,000
+
+Button:
 
 Register Now
 
-After Successful Registration
+Link:
 
-Display:
+Use the existing Summer Innovation Academy page.
 
-🎉 Thank you for registering!
+Do not recreate this page.
 
-We've received your registration.
+Program 3
 
-Our admissions team will contact you via WhatsApp within 24 hours.
+🚀 Holiday Innovation Camp
 
-Footer
+Description
 
-Include:
+A short holiday program during Christmas, Easter, and other school breaks that introduces children to coding, AI, and digital creativity through exciting projects.
 
-Codiva Builders
+Details
 
-Build. Create. Innovate.
+2 Weeks
+Monday–Friday
 
-Contact Information
+Price
 
-WhatsApp
+From ₦30,000
 
-Email
+Button
 
-Instagram
+Learn More
 
-Facebook
+Link
 
-Copyright
+/holiday-camp
 
-Design Requirements
-Mobile-first responsive design
-Fast loading
-Large, easy-to-read typography
-Rounded cards
-Modern shadows
-Smooth scrolling
-Soft animations
-Sticky "Register Now" button on mobile
-High-quality illustrations/photos of children learning technology
-Professional academy aesthetic (avoid cartoonish design)
+Program 4
+
+⭐ Builder Plus
+
+Description
+
+An accelerated learning pathway for students who want deeper learning, advanced projects, competitions, and mentorship.
+
+Details
+
+12 Weeks
+Two classes each week
+Portfolio development
+Competitions
+
+Price
+
+From ₦75,000 per term
+
+Button
+
+Learn More
+
+Link
+
+/builder-plus
+
+Program 5
+
+👨‍🏫 Private Coaching
+
+Description
+
+Personalized one-on-one coaching tailored to each child's learning goals and pace.
+
+Details
+
+Flexible schedule
+Personalized curriculum
+Individual mentorship
+
+Price
+
+From ₦15,000 per session
+
+Button
+
+Book a Session
+
+Link
+
+/private-coaching
+
+Program 6
+
+🏫 School Partnership Program
+
+Description
+
+Partner with Codiva Builders to bring coding, AI, and future skills programs directly into your school.
+
+Button
+
+Partner With Us
+
+Link
+
+/school-partnerships
+
+Card Design
+
+Each card should have:
+
+Rounded corners
+Soft shadow
+White background
+Brand colors (Navy Blue and Orange)
+Hover animation
+Small icon
+Consistent spacing
+Mobile responsive layout
+
+On hover:
+
+Slight lift animation
+Highlight border in brand color
+Button changes to brand orange
+Navigation
+
+Every button should navigate to its respective page.
+
+The Summer Innovation Academy button should continue linking to the existing summer page.
+
+For the remaining programs, create placeholder pages if they don't already exist.
+
+Each placeholder page should include:
+
+Hero banner
+Program overview
+Curriculum
+Schedule
+Pricing
+FAQ
+Registration button
+
+Use the same branding and layout as the Summer Innovation Academy page so every program page feels like part of one cohesive website.
+
+Homepage Enhancement
+
+Below the program cards, add a section titled:
+
+Not Sure Which Program Is Right?
+
+Text:
+
+Whether your child is just starting their technology journey or ready for advanced projects, we're here to help you choose the best learning path.
+
+Button:
+
+Talk to Our Team on WhatsApp
+
+This should open a WhatsApp chat with your academy's number.
+
 Technical Requirements
-Validate all required fields before submission.
-Store registrations in a database (or integrate with Airtable, Supabase, Firebase, or Google Sheets).
-Send an automatic confirmation email to the parent.
-Send a WhatsApp notification to the academy with the registration details (if WhatsApp integration is available).
-Protect the form against spam.
-Optimize for SEO with a page title like: Codiva Builders Summer Innovation Academy 2026 and a meta description highlighting the 4-week program, ages 6–17, AI, coding, and digital creativity.
+Maintain the current website styling and branding.
+Ensure all cards are fully responsive.
+Use smooth scrolling and subtle animations.
+Optimize for fast loading.
+Make the program cards the primary call-to-action on the homepage after the hero section.
 
-One additional recommendation: add a progress indicator to the registration form (for example, "Step 1 of 2"). Parents are more likely to complete a form when they can see it's short and straightforward. Also consider adding a small note such as "Only 20 seats available" if that reflects your actual capacity, as genuine scarcity can encourage earlier registration.
+The result should make it immediately clear to parents what programs are available, who each program is for, what it costs, and where to click next, while keeping the experience simple, polished, and professional.
