@@ -1,0 +1,822 @@
+.pageWrapper {
+  min-height: 100vh;
+  background-color: #ffffff;
+  color: #0f172a;
+  font-family: var(--font-poppins), system-ui, -apple-system, sans-serif;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* Veleon Academy Subsidiary Top Banner */
+.veleonBanner {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  color: #ffffff;
+  padding: 0.75rem 1rem;
+  text-align: center;
+  font-size: 0.875rem;
+  font-weight: 600;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.veleonBanner span {
+  color: #38bdf8;
+  font-weight: 700;
+}
+
+/* Header Navbar */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logoArea {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  font-size: 1.35rem;
+  font-weight: 800;
+  text-decoration: none;
+  flex-wrap: wrap;
+}
+
+.brandCodiva {
+  color: #FF6B00;
+}
+
+.brandBuilders {
+  color: #0A66C2;
+}
+
+.subsidiaryBadge {
+  font-size: 0.725rem;
+  font-weight: 600;
+  color: #475569;
+  background: #f1f5f9;
+  padding: 0.2rem 0.65rem;
+  border-radius: 9999px;
+  border: 1px solid #cbd5e1;
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.navLinks {
+  display: flex;
+  align-items: center;
+  gap: 1.75rem;
+  font-weight: 600;
+  font-size: 0.925rem;
+}
+
+.navLink {
+  color: #475569;
+  transition: color 0.2s ease;
+  text-decoration: none;
+}
+
+.navLink:hover {
+  color: #0A66C2;
+}
+
+.navCta {
+  background: #FF6B00;
+  color: #ffffff !important;
+  padding: 0.55rem 1.35rem;
+  border-radius: 9999px;
+  font-weight: 700;
+  box-shadow: 0 4px 10px rgba(255, 107, 0, 0.25);
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.navCta:hover {
+  background: #e66000;
+  transform: translateY(-1px);
+}
+
+/* Hero Section */
+.hero {
+  padding: 4rem 1.5rem 5rem;
+  background: radial-gradient(circle at 50% 0%, #fff7ed 0%, #ffffff 75%);
+  position: relative;
+}
+
+.heroContent {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3.5rem;
+  align-items: center;
+}
+
+.heroText {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.heroPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #fff7ed;
+  color: #FF6B00;
+  border: 1px solid #ffedd5;
+  padding: 0.4rem 1rem;
+  border-radius: 9999px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  margin-bottom: 1.25rem;
+}
+
+.heroTitle {
+  font-size: 3.2rem;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -1px;
+  color: #0f172a;
+  margin-bottom: 1.25rem;
+}
+
+.heroTitleGradient {
+  background: linear-gradient(135deg, #0A66C2 0%, #0284c7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.heroSubtitle {
+  font-size: 1.125rem;
+  color: #475569;
+  line-height: 1.65;
+  margin-bottom: 2rem;
+  max-width: 540px;
+}
+
+.heroButtons {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.heroVisual {
+  position: relative;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(10, 102, 194, 0.18);
+  border: 4px solid #ffffff;
+  width: 100%;
+}
+
+.heroImage {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: cover;
+  border-radius: 20px;
+}
+
+/* Quick Highlights Bar */
+.highlightsSection {
+  background: #f8fafc;
+  padding: 3rem 1.5rem;
+  border-top: 1px solid #f1f5f9;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.highlightsGrid {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1.25rem;
+}
+
+.highlightCard {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 1.25rem 1rem;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.highlightCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.06);
+}
+
+.highlightIcon {
+  font-size: 1.75rem;
+  margin-bottom: 0.4rem;
+}
+
+.highlightLabel {
+  font-weight: 700;
+  color: #0f172a;
+  font-size: 0.95rem;
+}
+
+/* Sections Common */
+.section {
+  padding: 5.5rem 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.sectionHeader {
+  text-align: center;
+  margin-bottom: 3.5rem;
+}
+
+.sectionTitle {
+  font-size: 2.4rem;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.5px;
+  margin-bottom: 0.75rem;
+}
+
+.sectionSubtitle {
+  font-size: 1.1rem;
+  color: #64748b;
+  max-width: 620px;
+  margin: 0 auto;
+}
+
+/* Why Choose Us Cards */
+.cardsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.75rem;
+}
+
+.whyCard {
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 2rem 1.5rem;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.03);
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.whyCard:hover {
+  transform: translateY(-5px);
+  border-color: #0A66C2;
+  box-shadow: 0 15px 35px rgba(10, 102, 194, 0.1);
+}
+
+.cardIconBox {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  margin-bottom: 1.25rem;
+}
+
+.cardTitle {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 0.5rem;
+}
+
+.cardDesc {
+  color: #64748b;
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+/* Learning Tracks Section */
+.tracksGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 2rem;
+}
+
+.trackCard {
+  background: #ffffff;
+  border-radius: 24px;
+  border: 2px solid #e2e8f0;
+  padding: 2.25rem 1.75rem;
+  position: relative;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.trackCard:hover {
+  border-color: #FF6B00;
+  box-shadow: 0 20px 40px rgba(255, 107, 0, 0.12);
+  transform: translateY(-6px);
+}
+
+.trackHeader {
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.trackAgeBadge {
+  display: inline-block;
+  background: #fff7ed;
+  color: #FF6B00;
+  font-weight: 700;
+  font-size: 0.85rem;
+  padding: 0.3rem 0.85rem;
+  border-radius: 9999px;
+  margin-bottom: 0.75rem;
+}
+
+.trackTitle {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 0.25rem;
+}
+
+.trackTheme {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #0A66C2;
+}
+
+.trackListTitle {
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+  color: #94a3b8;
+  margin-bottom: 1rem;
+}
+
+.trackList {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+  flex: 1;
+}
+
+.trackItem {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  font-weight: 500;
+  color: #334155;
+  font-size: 0.975rem;
+}
+
+.trackItemIcon {
+  color: #10b981;
+  font-weight: bold;
+}
+
+/* Schedule Timeline */
+.timelineWrapper {
+  max-width: 800px;
+  margin: 0 auto;
+  position: relative;
+  padding-left: 2.5rem;
+}
+
+.timelineWrapper::before {
+  content: '';
+  position: absolute;
+  left: 12px;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(180deg, #0A66C2 0%, #FF6B00 100%);
+  border-radius: 9999px;
+}
+
+.timelineItem {
+  position: relative;
+  margin-bottom: 2.25rem;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  padding: 1.5rem;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.03);
+}
+
+.timelineDot {
+  position: absolute;
+  left: -2.85rem;
+  top: 1.5rem;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 5px solid #0A66C2;
+  box-shadow: 0 0 0 4px rgba(10, 102, 194, 0.15);
+}
+
+.timelineItem:nth-child(even) .timelineDot {
+  border-color: #FF6B00;
+  box-shadow: 0 0 0 4px rgba(255, 107, 0, 0.15);
+}
+
+.timelineHeader {
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #64748b;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.25rem;
+}
+
+.timelineTitle {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+/* Gains Grid */
+.gainsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.5rem;
+}
+
+.gainCard {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 1.5rem;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+  transition: transform 0.2s ease;
+}
+
+.gainCard:hover {
+  transform: scale(1.02);
+  border-color: #10b981;
+}
+
+.gainIcon {
+  font-size: 2rem;
+}
+
+.gainText {
+  font-weight: 700;
+  color: #1e293b;
+  font-size: 1rem;
+}
+
+/* About Subsidiary Section */
+.aboutSection {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  color: #ffffff;
+  padding: 5rem 1.5rem;
+  border-radius: 32px;
+  max-width: 1200px;
+  margin: 0 auto 5rem;
+}
+
+.aboutContent {
+  max-width: 800px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.aboutTitle {
+  font-size: 2.2rem;
+  font-weight: 800;
+  margin-bottom: 1.25rem;
+  color: #ffffff;
+}
+
+.aboutText {
+  font-size: 1.15rem;
+  line-height: 1.7;
+  color: #cbd5e1;
+  margin-bottom: 2rem;
+}
+
+.aboutHighlight {
+  color: #38bdf8;
+  font-weight: 700;
+}
+
+/* Footer */
+.footer {
+  background: #0f172a;
+  color: #cbd5e1;
+  padding: 4rem 1.5rem 2.5rem;
+  border-top: 1px solid #1e293b;
+}
+
+.footerGrid {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 3rem;
+  margin-bottom: 3rem;
+}
+
+.footerBrandTitle {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin-bottom: 0.5rem;
+}
+
+.footerTagline {
+  color: #94a3b8;
+  font-size: 0.975rem;
+  margin-bottom: 1rem;
+}
+
+.footerColTitle {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 1rem;
+}
+
+.footerList {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.footerList a {
+  color: #cbd5e1;
+  transition: color 0.2s ease;
+}
+
+.footerList a:hover {
+  color: #FF6B00;
+}
+
+.copyright {
+  text-align: center;
+  border-top: 1px solid #1e293b;
+  padding-top: 2rem;
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+/* Sticky Mobile CTA Bar */
+.mobileStickyBar {
+  display: none;
+}
+
+/* ====================================================== */
+/* MEDIA QUERIES FOR TABLET & MOBILE RESPONSIVENESS       */
+/* ====================================================== */
+
+@media (max-width: 960px) {
+  .heroContent {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+  }
+  
+  .heroVisual {
+    max-width: 600px;
+    margin: 0 auto;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Header */
+  .header {
+    padding: 0.85rem 1rem;
+  }
+
+  .logoArea {
+    font-size: 1.15rem;
+  }
+
+  .subsidiaryBadge {
+    font-size: 0.675rem;
+    padding: 0.15rem 0.45rem;
+  }
+
+  /* Hide plain text nav links on mobile to prevent navbar crowding */
+  .navLinks .navLink:not(.navCta) {
+    display: none;
+  }
+
+  .navCta {
+    padding: 0.45rem 1rem;
+    font-size: 0.85rem;
+  }
+
+  /* Hero */
+  .hero {
+    padding: 2.5rem 1rem 3.5rem;
+  }
+
+  .heroTitle {
+    font-size: 2.25rem;
+    letter-spacing: -0.5px;
+  }
+
+  .heroSubtitle {
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .heroButtons {
+    flex-direction: column;
+  }
+
+  .heroButtons a {
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+  }
+
+  /* Highlights Bar */
+  .highlightsSection {
+    padding: 2rem 1rem;
+  }
+
+  .highlightsGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.85rem;
+  }
+
+  .highlightCard {
+    padding: 1rem 0.75rem;
+  }
+
+  .highlightIcon {
+    font-size: 1.5rem;
+  }
+
+  .highlightLabel {
+    font-size: 0.85rem;
+  }
+
+  /* Section Titles */
+  .section {
+    padding: 3.5rem 1rem;
+  }
+
+  .sectionHeader {
+    margin-bottom: 2.25rem;
+  }
+
+  .sectionTitle {
+    font-size: 1.85rem;
+  }
+
+  .sectionSubtitle {
+    font-size: 0.975rem;
+  }
+
+  /* Grids */
+  .cardsGrid {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+
+  .whyCard {
+    padding: 1.5rem 1.25rem;
+  }
+
+  .tracksGrid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .trackCard {
+    padding: 1.75rem 1.25rem;
+  }
+
+  /* Timeline */
+  .timelineWrapper {
+    padding-left: 2rem;
+  }
+
+  .timelineDot {
+    left: -2.35rem;
+    width: 20px;
+    height: 20px;
+    top: 1.35rem;
+  }
+
+  .timelineItem {
+    padding: 1.25rem 1rem;
+    margin-bottom: 1.75rem;
+  }
+
+  .timelineTitle {
+    font-size: 1.15rem;
+  }
+
+  /* Gains Grid */
+  .gainsGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.85rem;
+  }
+
+  .gainCard {
+    padding: 1rem 0.75rem;
+    gap: 0.65rem;
+  }
+
+  .gainIcon {
+    font-size: 1.5rem;
+  }
+
+  .gainText {
+    font-size: 0.875rem;
+  }
+
+  /* About Subsidiary Section */
+  .aboutSection {
+    padding: 3rem 1.25rem;
+    border-radius: 20px;
+    margin-bottom: 3.5rem;
+  }
+
+  .aboutTitle {
+    font-size: 1.7rem;
+  }
+
+  .aboutText {
+    font-size: 1rem;
+  }
+
+  /* Footer */
+  .footer {
+    padding: 3rem 1rem 6.5rem;
+  }
+
+  .footerGrid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  /* Sticky Mobile Bar */
+  .mobileStickyBar {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid #e2e8f0;
+    padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom));
+    z-index: 90;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+  }
+
+  .mobileStickyText {
+    font-size: 0.825rem;
+    font-weight: 700;
+    color: #0f172a;
+  }
+
+  .mobileStickyPrice {
+    color: #FF6B00;
+    font-weight: 800;
+  }
+}
+
+@media (max-width: 480px) {
+  .heroTitle {
+    font-size: 1.95rem;
+  }
+
+  .gainsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .subsidiaryBadge {
+    display: none;
+  }
+}

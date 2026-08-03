@@ -173,4 +173,11 @@ button {
   .section-title {
     font-size: 2rem;
   }
+  .whatsapp-float {
+    bottom: 5.25rem;
+    right: 1.25rem;
+    width: 52px;
+    height: 52px;
+    font-size: 1.6rem;
+  }
 }

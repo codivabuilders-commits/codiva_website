@@ -3,6 +3,21 @@
 import React, { useState } from 'react';
 import styles from './page.module.css';
 import EnrollmentForm from '../components/EnrollmentForm';
+import {
+  FaSmile,
+  FaTools,
+  FaUsers,
+  FaGlobe,
+  FaChalkboardTeacher,
+  FaRocket,
+  FaGamepad,
+  FaCode,
+  FaPython,
+  FaPalette,
+  FaRobot,
+  FaStar,
+  FaWhatsapp,
+} from 'react-icons/fa';
 
 export default function Home() {
   const [isEnrollModalOpen, setIsEnrollModalOpen] = useState(false);
@@ -24,7 +39,8 @@ export default function Home() {
           <span style={{ color: "var(--secondary-orange)" }}>Codiva</span>
           <span style={{ color: "var(--primary-blue)" }}>Builders</span>
         </div>
-        <div className="flex gap-6" style={{ fontWeight: "600", fontSize: "0.95rem" }}>
+        <div className="flex gap-6 items-center" style={{ fontWeight: "600", fontSize: "0.95rem" }}>
+          <a href="/summer" style={{ color: "var(--secondary-orange)", fontWeight: "700" }}>Summer 2026 🔥</a>
           <a href="#courses" style={{ color: "var(--foreground)" }}>Programs</a>
           <a href="#about" style={{ color: "var(--foreground)" }}>About</a>
           <button 
@@ -39,9 +55,9 @@ export default function Home() {
       <section className={styles.hero}>
         <div className={styles.heroContent}>
           <div className="flex justify-center" style={{ marginBottom: "1rem" }}>
-             <span style={{ backgroundColor: "var(--orange-soft)", color: "var(--secondary-orange)", padding: "0.25rem 1rem", borderRadius: "9999px", fontWeight: "600", fontSize: "0.875rem" }}>
-               No coding experience needed.
-             </span>
+             <a href="/summer" style={{ backgroundColor: "var(--orange-soft)", color: "var(--secondary-orange)", padding: "0.4rem 1.25rem", borderRadius: "9999px", fontWeight: "700", fontSize: "0.875rem", display: "inline-flex", alignItems: "center", gap: "0.5rem" }}>
+               <FaRocket /> Summer Innovation Academy 2026 Registration Open!
+             </a>
           </div>
           <h1 className={styles.heroTitle}>Building Young Tech Minds for the Future</h1>
           <p className={styles.heroSubtitle}>
@@ -49,7 +65,7 @@ export default function Home() {
           </p>
           <div className={styles.heroButtons}>
             <button onClick={() => openEnrollModal()} className="btn btn-orange">Enroll Now</button>
-            <a href="#courses" className="btn btn-secondary" style={{ borderColor: 'var(--secondary-orange)', color: 'var(--secondary-orange)' }}>View Programs</a>
+            <a href="/summer" className="btn btn-secondary" style={{ borderColor: 'var(--secondary-orange)', color: 'var(--secondary-orange)' }}>Summer Camp 2026</a>
           </div>
         </div>
       </section>
@@ -59,7 +75,7 @@ export default function Home() {
         <div className="container">
           <h2 className="section-title">Who We Are</h2>
           <p className={styles.aboutContent}>
-            Codiva Builders is a kids tech academy helping children learn future-ready digital skills through fun, engaging, and project-based learning. <br/><br/>
+            Codiva Builders is the kids and teens subsidiary of <strong>Veleon Academy</strong>, helping children learn future-ready digital skills through fun, engaging, and project-based learning. <br/><br/>
             We believe every child can become a creator, builder, and innovator.
           </p>
         </div>
@@ -71,12 +87,12 @@ export default function Home() {
           <h2 className="section-title">Why Parents Love Codiva Builders</h2>
           <div className={styles.grid}>
             {[
-              { icon: '😊', title: 'Beginner-friendly', desc: 'Lessons designed for absolute beginners.', color: 'var(--secondary-orange)' },
-              { icon: '🛠️', title: 'Fun Practical Projects', desc: 'Learning by building real-world projects.', color: 'var(--fun-purple)' },
-              { icon: '👥', title: 'Small Class Sizes', desc: 'Personalized attention for every child.', color: 'var(--primary-blue)' },
-              { icon: '🌍', title: 'Online & Physical', desc: 'Flexible learning options available.', color: 'var(--fun-green)' },
-              { icon: '👨‍🏫', title: 'Skilled Instructors', desc: 'Experienced teachers who love kids.', color: 'var(--fun-pink)' },
-              { icon: '🚀', title: 'Confidence Building', desc: 'Empowering children to create.', color: 'var(--fun-yellow)' },
+              { icon: <FaSmile />, title: 'Beginner-friendly', desc: 'Lessons designed for absolute beginners.', color: 'var(--secondary-orange)' },
+              { icon: <FaTools />, title: 'Fun Practical Projects', desc: 'Learning by building real-world projects.', color: 'var(--fun-purple)' },
+              { icon: <FaUsers />, title: 'Small Class Sizes', desc: 'Personalized attention for every child.', color: 'var(--primary-blue)' },
+              { icon: <FaGlobe />, title: 'Online & Physical', desc: 'Flexible learning options available.', color: 'var(--fun-green)' },
+              { icon: <FaChalkboardTeacher />, title: 'Skilled Instructors', desc: 'Experienced teachers who love kids.', color: 'var(--fun-pink)' },
+              { icon: <FaRocket />, title: 'Confidence Building', desc: 'Empowering children to create.', color: 'var(--fun-yellow)' },
             ].map((feature, i) => (
               <div key={i} className={styles.card}>
                 <div className={styles.cardIcon} style={{ backgroundColor: `${feature.color}15`, color: feature.color }}>{feature.icon}</div>
@@ -95,11 +111,11 @@ export default function Home() {
           <p className="section-subtitle">Discover the perfect course for your child's age and interests.</p>
           <div className={styles.grid}>
             {[
-              { icon: '🎮', title: 'Scratch Coding', desc: 'Kids learn logic by creating games and animations.', color: 'var(--secondary-orange)' },
-              { icon: '🌐', title: 'Web Development', desc: 'Learn to build websites with HTML, CSS & JavaScript.', color: 'var(--primary-blue)' },
-              { icon: '🐍', title: 'Python Programming', desc: 'Fun coding projects and beginner programming skills.', color: 'var(--fun-green)' },
-              { icon: '🎨', title: 'Graphic Design', desc: 'Learn Canva, branding, posters, and creativity.', color: 'var(--fun-pink)' },
-              { icon: '🤖', title: 'AI for Kids', desc: 'Learn artificial intelligence tools safely and creatively.', color: 'var(--fun-purple)' },
+              { icon: <FaGamepad />, title: 'Scratch Coding', desc: 'Kids learn logic by creating games and animations.', color: 'var(--secondary-orange)' },
+              { icon: <FaCode />, title: 'Web Development', desc: 'Learn to build websites with HTML, CSS & JavaScript.', color: 'var(--primary-blue)' },
+              { icon: <FaPython />, title: 'Python Programming', desc: 'Fun coding projects and beginner programming skills.', color: 'var(--fun-green)' },
+              { icon: <FaPalette />, title: 'Graphic Design', desc: 'Learn Canva, branding, posters, and creativity.', color: 'var(--fun-pink)' },
+              { icon: <FaRobot />, title: 'AI for Kids', desc: 'Learn artificial intelligence tools safely and creatively.', color: 'var(--fun-purple)' },
             ].map((course, i) => (
               <div key={i} className={styles.card}>
                 <div className={styles.cardIcon} style={{ backgroundColor: `${course.color}15`, color: course.color }}>{course.icon}</div>
@@ -159,15 +175,21 @@ export default function Home() {
           <h2 className="section-title">What Parents Say</h2>
           <div className={styles.grid}>
              <div className={styles.testimonialCard}>
-                <div className={styles.stars}>⭐⭐⭐⭐⭐</div>
+                <div className={styles.stars} style={{ color: '#fbbf24', display: 'flex', gap: '0.25rem', justifyContent: 'center' }}>
+                  <FaStar /><FaStar /><FaStar /><FaStar /><FaStar />
+                </div>
                 <p>“My son built his first game in 2 weeks!”</p>
              </div>
              <div className={styles.testimonialCard}>
-                <div className={styles.stars}>⭐⭐⭐⭐⭐</div>
+                <div className={styles.stars} style={{ color: '#fbbf24', display: 'flex', gap: '0.25rem', justifyContent: 'center' }}>
+                  <FaStar /><FaStar /><FaStar /><FaStar /><FaStar />
+                </div>
                 <p>“Best investment for my daughter.”</p>
              </div>
              <div className={styles.testimonialCard}>
-                <div className={styles.stars}>⭐⭐⭐⭐⭐</div>
+                <div className={styles.stars} style={{ color: '#fbbf24', display: 'flex', gap: '0.25rem', justifyContent: 'center' }}>
+                  <FaStar /><FaStar /><FaStar /><FaStar /><FaStar />
+                </div>
                 <p>“Now my child loves learning tech.”</p>
              </div>
           </div>
@@ -214,7 +236,7 @@ export default function Home() {
            </div>
         </div>
         <div className={styles.footer}>
-          © 2026 Codiva Builders. All rights reserved.
+          © 2026 Codiva Builders (Subsidiary of Veleon Academy). All rights reserved.
         </div>
       </footer>
 
@@ -223,7 +245,7 @@ export default function Home() {
 
       {/* Floating WhatsApp Button */}
       <a href="https://wa.me/2340000000000" className="whatsapp-float" aria-label="Chat with us on WhatsApp" target="_blank" rel="noopener noreferrer">
-        💬
+        <FaWhatsapp />
       </a>
     </main>
   );

@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const { createClient } = require('@supabase/supabase-js');
+const { pool, pingDatabase } = require('./database/pool');
 require('dotenv').config();
 
 const app = express();
@@ -10,22 +11,34 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-// Supabase Setup
+// Initialize Database connection on startup
+pingDatabase()
+  .then(() => {
+    console.log('[DB] Connected to PostgreSQL via database pool.');
+  })
+  .catch((err) => {
+    console.error('[DB] Connection error:', err.message);
+  });
+
+// Optional Supabase Client setup
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_ANON_KEY;
+let supabase = null;
 
-if (!supabaseUrl || !supabaseKey) {
-  console.error("Missing Supabase credentials in .env file");
+if (supabaseUrl && supabaseKey) {
+  supabase = createClient(supabaseUrl, supabaseKey);
 }
 
-const supabase = createClient(supabaseUrl, supabaseKey);
-
-// Routes
+// Healthcheck Route
 app.get('/', (req, res) => {
-  res.send('Codiva Builders API is running...');
+  res.json({ message: 'Codiva Builders API is running...', status: 'online' });
 });
 
-// Enrollment Endpoint
+// ==========================================
+// PUBLIC ENROLLMENT ENDPOINTS
+// ==========================================
+
+// General Program Enrollment Endpoint
 app.post('/api/enroll', async (req, res) => {
   try {
     const { 
@@ -42,27 +55,215 @@ app.post('/api/enroll', async (req, res) => {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    const { data, error } = await supabase
-      .from('enrollments')
-      .insert([
-        { 
-          child_name: childName, 
-          child_age: childAge, 
-          parent_name: parentName, 
-          parent_email: parentEmail, 
-          parent_phone: parentPhone, 
-          course: course, 
-          learning_mode: learningMode,
-          created_at: new Date()
-        }
-      ]);
+    // Insert directly into PostgreSQL database pool
+    const result = await pool.query(
+      `INSERT INTO enrollments (child_name, child_age, parent_name, parent_email, parent_phone, course, learning_mode)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       RETURNING *`,
+      [
+        childName, 
+        parseInt(childAge || '0', 10), 
+        parentName || '', 
+        parentEmail, 
+        parentPhone || '', 
+        course, 
+        learningMode || 'Online'
+      ]
+    );
 
-    if (error) throw error;
+    // Also attempt Supabase sync if credentials exist
+    if (supabase) {
+      try {
+        await supabase.from('enrollments').insert([
+          { 
+            child_name: childName, 
+            child_age: childAge, 
+            parent_name: parentName, 
+            parent_email: parentEmail, 
+            parent_phone: parentPhone, 
+            course: course, 
+            learning_mode: learningMode,
+            created_at: new Date()
+          }
+        ]);
+      } catch (sbErr) {
+        console.warn('[DB] Supabase secondary sync note:', sbErr.message);
+      }
+    }
 
-    res.status(201).json({ message: 'Enrollment successful', data });
+    res.status(201).json({ 
+      message: 'Enrollment successful', 
+      data: result.rows[0] 
+    });
   } catch (error) {
     console.error('Error saving enrollment:', error.message);
-    res.status(500).json({ error: 'Failed to process enrollment' });
+    res.status(500).json({ error: 'Failed to process enrollment: ' + error.message });
+  }
+});
+
+// Summer Academy Registration Endpoint
+app.post('/api/summer-register', async (req, res) => {
+  try {
+    const { 
+      parentName, 
+      childName, 
+      childAge, 
+      assignedTrack, 
+      parentPhone, 
+      parentEmail, 
+      preferredCampus,
+      agreeUpdates
+    } = req.body;
+
+    if (!parentName || !childName || !parentEmail || !parentPhone) {
+      return res.status(400).json({ error: 'Missing required registration fields' });
+    }
+
+    // Insert directly into PostgreSQL database pool
+    const result = await pool.query(
+      `INSERT INTO summer_registrations (parent_name, child_name, child_age, assigned_track, parent_phone, parent_email, preferred_campus, agree_updates)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       RETURNING *`,
+      [
+        parentName,
+        childName,
+        parseInt(childAge, 10),
+        assignedTrack || 'Summer Track',
+        parentPhone,
+        parentEmail,
+        preferredCampus || 'Online / Virtual Campus',
+        agreeUpdates !== false
+      ]
+    );
+
+    // Also attempt Supabase sync if credentials exist
+    if (supabase) {
+      try {
+        await supabase.from('summer_registrations').insert([
+          { 
+            parent_name: parentName, 
+            child_name: childName, 
+            child_age: parseInt(childAge, 10), 
+            assigned_track: assignedTrack,
+            parent_phone: parentPhone, 
+            parent_email: parentEmail, 
+            preferred_campus: preferredCampus || 'Online / Virtual Campus',
+            agree_updates: agreeUpdates !== false,
+            created_at: new Date()
+          }
+        ]);
+      } catch (sbErr) {
+        console.warn('[DB] Supabase secondary sync note:', sbErr.message);
+      }
+    }
+
+    res.status(201).json({ 
+      message: 'Summer registration successful', 
+      data: result.rows[0] 
+    });
+  } catch (error) {
+    console.error('Error saving summer registration:', error.message);
+    res.status(500).json({ error: 'Failed to process summer registration: ' + error.message });
+  }
+});
+
+// ==========================================
+// ADMIN ENDPOINTS (To view registered users)
+// ==========================================
+
+// Get All Registrations (Combined Summer + General)
+app.get('/api/admin/users', async (req, res) => {
+  try {
+    const summerRes = await pool.query('SELECT *, \'summer\' as type FROM summer_registrations ORDER BY created_at DESC');
+    const generalRes = await pool.query('SELECT *, \'general\' as type FROM enrollments ORDER BY created_at DESC');
+
+    const summerUsers = summerRes.rows.map(r => ({
+      id: `summer-${r.id}`,
+      rawId: r.id,
+      type: 'Summer Academy 2026',
+      parentName: r.parent_name,
+      childName: r.child_name,
+      childAge: r.child_age,
+      program: r.assigned_track,
+      phone: r.parent_phone,
+      email: r.parent_email,
+      campus: r.preferred_campus,
+      agreeUpdates: r.agree_updates,
+      createdAt: r.created_at
+    }));
+
+    const generalUsers = generalRes.rows.map(r => ({
+      id: `general-${r.id}`,
+      rawId: r.id,
+      type: 'General Program',
+      parentName: r.parent_name,
+      childName: r.child_name,
+      childAge: r.child_age,
+      program: r.course,
+      phone: r.parent_phone,
+      email: r.parent_email,
+      campus: r.learning_mode,
+      agreeUpdates: true,
+      createdAt: r.created_at
+    }));
+
+    const allUsers = [...summerUsers, ...generalUsers].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    res.json({
+      stats: {
+        total: allUsers.length,
+        summerCount: summerUsers.length,
+        generalCount: generalUsers.length,
+      },
+      users: allUsers,
+      summerRegistrations: summerUsers,
+      generalEnrollments: generalUsers
+    });
+  } catch (error) {
+    console.error('Admin API error:', error.message);
+    res.status(500).json({ error: 'Failed to fetch registered users: ' + error.message });
+  }
+});
+
+// Get Summer Registrations Only
+app.get('/api/admin/summer-registrations', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM summer_registrations ORDER BY created_at DESC');
+    res.json({ count: result.rows.length, data: result.rows });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get General Enrollments Only
+app.get('/api/admin/enrollments', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM enrollments ORDER BY created_at DESC');
+    res.json({ count: result.rows.length, data: result.rows });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Delete a Summer Registration Entry
+app.delete('/api/admin/summer-registrations/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await pool.query('DELETE FROM summer_registrations WHERE id = $1', [id]);
+    res.json({ message: 'Summer registration deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Delete a General Enrollment Entry
+app.delete('/api/admin/enrollments/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await pool.query('DELETE FROM enrollments WHERE id = $1', [id]);
+    res.json({ message: 'Enrollment deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 });
 

@@ -1,4 +1,4 @@
--- Create the enrollments table
+-- Create the enrollments table for general courses
 create table enrollments (
   id bigint primary key generated always as identity,
   child_name text not null,
@@ -11,8 +11,16 @@ create table enrollments (
   created_at timestamptz default now()
 );
 
--- Enable Row Level Security (optional but recommended)
--- alter table enrollments enable row level security;
-
--- Create a policy that allows anyone to insert (since it's a public signup form)
--- create policy "Allow anyone to enroll" on enrollments for insert with check (true);
+-- Create summer_registrations table for Summer Innovation Academy 2026
+create table summer_registrations (
+  id bigint primary key generated always as identity,
+  parent_name text not null,
+  child_name text not null,
+  child_age integer not null,
+  assigned_track text not null,
+  parent_phone text not null,
+  parent_email text not null,
+  preferred_campus text default 'Online / Virtual Campus',
+  agree_updates boolean default true,
+  created_at timestamptz default now()
+);
