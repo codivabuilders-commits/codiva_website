@@ -307,27 +307,26 @@ export default function SummerPage() {
           <p className={styles.sectionSubtitle}>Beyond technical knowledge, our academy builds confidence and future readiness.</p>
         </div>
 
-        <div className={styles.gainsGrid}>
+        <div className={styles.gainsCompactGrid}>
           {[
             { icon: <FaRocket style={{ color: '#FF6B00' }} />, text: 'Build real-world projects' },
             { icon: <FaPalette style={{ color: '#ec4899' }} />, text: 'Improve creative thinking' },
             { icon: <FaLaptopCode style={{ color: '#0A66C2' }} />, text: 'Learn coding fundamentals' },
-            { icon: <FaRobot style={{ color: '#8b5cf6' }} />, text: 'Explore Artificial Intelligence' },
+            { icon: <FaRobot style={{ color: '#8b5cf6' }} />, text: 'Explore AI & future skills' },
             { icon: <FaAward style={{ color: '#f59e0b' }} />, text: 'Build self-confidence' },
             { icon: <FaMicrophone style={{ color: '#10b981' }} />, text: 'Master presentation skills' },
             { icon: <FaFolderOpen style={{ color: '#0284c7' }} />, text: 'Personal digital portfolio' },
             { icon: <FaCertificate style={{ color: '#10b981' }} />, text: 'Certificate of Completion' },
           ].map((gain, index) => (
-            <div key={index} className={styles.gainCard}>
-              <div className={styles.gainIcon}>{gain.icon}</div>
-              <div className={styles.gainText}>{gain.text}</div>
+            <div key={index} className={styles.gainPill}>
+              <span className={styles.gainPillIcon}>{gain.icon}</span>
+              <span className={styles.gainPillText}>{gain.text}</span>
             </div>
           ))}
         </div>
       </section>
 
-      {/* MAIN REGISTRATION FORM SECTION */}
-      <section style={{ padding: '4rem 1.5rem 6rem', background: '#f8fafc' }}>
+      <section style={{ padding: '2.5rem 1.5rem 4rem', background: '#f8fafc' }}>
         <SummerRegistrationForm />
       </section>
 

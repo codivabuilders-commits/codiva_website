@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 
+const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:5000';
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -22,42 +24,11 @@ export async function POST(request: Request) {
       );
     }
 
-    // Connect to Supabase REST API if credentials exist
-    const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseKey = process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-    if (supabaseUrl && supabaseKey) {
-      try {
-        const dbRes = await fetch(`${supabaseUrl}/rest/v1/summer_registrations`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': supabaseKey,
-            'Authorization': `Bearer ${supabaseKey}`,
-            'Prefer': 'return=representation',
-          },
-          body: JSON.stringify({
-            parent_name: parentName,
-            child_name: childName,
-            child_age: parseInt(childAge, 10),
-            assigned_track: assignedTrack,
-            parent_phone: parentPhone,
-            parent_email: parentEmail,
-            preferred_campus: preferredCampus,
-            agree_updates: agreeUpdates,
-            created_at: new Date().toISOString(),
-          }),
-        });
-
-        if (!dbRes.ok) {
-          const errText = await dbRes.text();
-          console.error('Supabase REST error saving summer registration:', errText);
-        }
-      } catch (dbErr) {
-        console.error('Failed to communicate with Supabase:', dbErr);
-      }
-    } else {
-      console.log('Received Summer Registration (Supabase credentials not set):', {
+    // Forward to Express backend which handles the DB write via pg pool
+    const backendRes = await fetch(`${BACKEND_URL}/api/summer-register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
         parentName,
         childName,
         childAge,
@@ -66,17 +37,27 @@ export async function POST(request: Request) {
         parentEmail,
         preferredCampus,
         agreeUpdates,
-        timestamp: new Date().toISOString(),
-      });
+      }),
+    });
+
+    if (!backendRes.ok) {
+      const errText = await backendRes.text();
+      console.error('[summer-register] Backend error:', errText);
+      return NextResponse.json(
+        { error: 'Failed to save registration. Please try again.' },
+        { status: 500 }
+      );
     }
+
+    const data = await backendRes.json();
 
     return NextResponse.json(
       {
         message: 'Summer registration received successfully',
         data: {
-          parentName,
-          childName,
-          assignedTrack,
+          parentName: data.data?.parent_name ?? parentName,
+          childName: data.data?.child_name ?? childName,
+          assignedTrack: data.data?.assigned_track ?? assignedTrack,
         },
       },
       { status: 201 }

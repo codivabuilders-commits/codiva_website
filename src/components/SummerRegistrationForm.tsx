@@ -334,7 +334,7 @@ export default function SummerRegistrationForm() {
                   onChange={handleChange}
                 >
                   <option value="Online / Virtual Campus">Online / Virtual Campus</option>
-                  <option value="Lagos Physical Campus">Lagos Physical Campus</option>
+                  {/* <option value="Lagos Physical Campus">Lagos Physical Campus</option> */}
                 </select>
               </div>
 
