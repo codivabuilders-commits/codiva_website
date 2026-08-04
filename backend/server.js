@@ -194,42 +194,70 @@ app.post('/api/summer-register', async (req, res) => {
 // Get All Registrations (Combined Summer + General)
 app.get('/api/admin/users', async (req, res) => {
   try {
-    const summerRes = await pool.query('SELECT *, \'summer\' as type FROM summer_registrations ORDER BY created_at DESC');
-    const generalRes = await pool.query('SELECT *, \'general\' as type FROM enrollments ORDER BY created_at DESC');
+    let summerRows = [];
+    let generalRows = [];
 
-    const summerUsers = summerRes.rows.map(r => ({
+    // Try PostgreSQL Pool first
+    try {
+      const summerRes = await pool.query("SELECT *, 'summer' as type FROM summer_registrations ORDER BY created_at DESC");
+      summerRows = summerRes.rows || [];
+    } catch (pgErr) {
+      console.warn('[DB] PostgreSQL summer_registrations query note:', pgErr.message);
+    }
+
+    try {
+      const generalRes = await pool.query("SELECT *, 'general' as type FROM enrollments ORDER BY created_at DESC");
+      generalRows = generalRes.rows || [];
+    } catch (pgErr) {
+      console.warn('[DB] PostgreSQL enrollments query note:', pgErr.message);
+    }
+
+    // Secondary Fallback: Supabase Client if postgres pool returned nothing
+    if (summerRows.length === 0 && generalRows.length === 0 && supabase) {
+      try {
+        const { data: sbSummer } = await supabase.from('summer_registrations').select('*').order('created_at', { ascending: false });
+        const { data: sbGeneral } = await supabase.from('enrollments').select('*').order('created_at', { ascending: false });
+        
+        if (sbSummer) summerRows = sbSummer;
+        if (sbGeneral) generalRows = sbGeneral;
+      } catch (sbErr) {
+        console.warn('[DB] Supabase fallback fetch note:', sbErr.message);
+      }
+    }
+
+    const summerUsers = summerRows.map(r => ({
       id: `summer-${r.id}`,
       rawId: r.id,
       type: 'Summer Academy 2026',
-      parentName: r.parent_name,
-      childName: r.child_name,
-      childAge: r.child_age,
-      program: r.assigned_track,
-      phone: r.parent_phone,
-      email: r.parent_email,
-      campus: r.preferred_campus,
-      agreeUpdates: r.agree_updates,
-      createdAt: r.created_at
+      parentName: r.parent_name || r.parentName || '',
+      childName: r.child_name || r.childName || '',
+      childAge: r.child_age || r.childAge || '',
+      program: r.assigned_track || r.assignedTrack || 'Summer Track',
+      phone: r.parent_phone || r.parentPhone || '',
+      email: r.parent_email || r.parentEmail || '',
+      campus: r.preferred_campus || r.preferredCampus || 'Online / Virtual Campus',
+      agreeUpdates: r.agree_updates !== false,
+      createdAt: r.created_at || new Date().toISOString()
     }));
 
-    const generalUsers = generalRes.rows.map(r => ({
+    const generalUsers = generalRows.map(r => ({
       id: `general-${r.id}`,
       rawId: r.id,
       type: 'General Program',
-      parentName: r.parent_name,
-      childName: r.child_name,
-      childAge: r.child_age,
-      program: r.course,
-      phone: r.parent_phone,
-      email: r.parent_email,
-      campus: r.learning_mode,
+      parentName: r.parent_name || r.parentName || '',
+      childName: r.child_name || r.childName || '',
+      childAge: r.child_age || r.childAge || '',
+      program: r.course || 'General Course',
+      phone: r.parent_phone || r.parentPhone || '',
+      email: r.parent_email || r.parentEmail || '',
+      campus: r.learning_mode || r.learningMode || 'Online',
       agreeUpdates: true,
-      createdAt: r.created_at
+      createdAt: r.created_at || new Date().toISOString()
     }));
 
-    const allUsers = [...summerUsers, ...generalUsers].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    const allUsers = [...summerUsers, ...generalUsers].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-    res.json({
+    return res.json({
       stats: {
         total: allUsers.length,
         summerCount: summerUsers.length,
@@ -241,7 +269,13 @@ app.get('/api/admin/users', async (req, res) => {
     });
   } catch (error) {
     console.error('Admin API error:', error.message);
-    res.status(500).json({ error: 'Failed to fetch registered users: ' + error.message });
+    return res.json({
+      stats: { total: 0, summerCount: 0, generalCount: 0 },
+      users: [],
+      summerRegistrations: [],
+      generalEnrollments: [],
+      warning: error.message
+    });
   }
 });
 
