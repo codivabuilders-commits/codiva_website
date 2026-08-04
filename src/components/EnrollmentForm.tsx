@@ -5,7 +5,8 @@ import styles from './EnrollmentForm.module.css';
 import { API_BASE_URL } from '@/config/api';
 import { getWhatsAppLink, DISPLAY_PHONE } from '@/config/contact';
 import { initializePaystackPayment } from '@/utils/paystack';
-import { FaPlus, FaTrash, FaCreditCard, FaBookmark, FaWhatsapp, FaPrint, FaCheckCircle, FaFileInvoiceDollar } from 'react-icons/fa';
+import { toPng } from 'html-to-image';
+import { FaPlus, FaTrash, FaCreditCard, FaBookmark, FaWhatsapp, FaPrint, FaCheckCircle, FaFileInvoiceDollar, FaDownload } from 'react-icons/fa';
 
 interface ChildEntry {
   name: string;
@@ -31,6 +32,7 @@ export default function EnrollmentForm({ isOpen, onClose }: EnrollmentFormProps)
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const [savedRegistration, setSavedRegistration] = useState<any>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const basePricePerChild = 40000;
   const childCount = children.length;
@@ -54,6 +56,33 @@ export default function EnrollmentForm({ isOpen, onClose }: EnrollmentFormProps)
     const updated = [...children];
     updated[index][field] = value;
     setChildren(updated);
+  };
+
+  const isPaid = savedRegistration?.paymentStatus === 'Paid';
+
+  const handleDownloadImage = async () => {
+    const node = document.getElementById('enrollment-receipt');
+    if (!node) return;
+
+    setIsDownloading(true);
+    try {
+      const dataUrl = await toPng(node, {
+        quality: 0.95,
+        pixelRatio: 2,
+        backgroundColor: '#ffffff',
+      });
+      const link = document.createElement('a');
+      link.download = isPaid
+        ? `Codiva_Receipt_${savedRegistration?.reference || Date.now()}.png`
+        : `Codiva_Invoice_${savedRegistration?.reference || Date.now()}.png`;
+      link.href = dataUrl;
+      link.click();
+    } catch (err) {
+      console.error('Download image failed:', err);
+      window.print();
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   const handlePrintReceipt = () => {
@@ -164,8 +193,6 @@ export default function EnrollmentForm({ isOpen, onClose }: EnrollmentFormProps)
   };
 
   if (!isOpen) return null;
-
-  const isPaid = savedRegistration?.paymentStatus === 'Paid';
 
   const whatsappMessage = savedRegistration
     ? isPaid
@@ -324,9 +351,8 @@ export default function EnrollmentForm({ isOpen, onClose }: EnrollmentFormProps)
                 <FaWhatsapp style={{ fontSize: '1.25rem' }} /> Confirm via WhatsApp
               </a>
 
-              <button onClick={handlePrintReceipt} className={styles.btnPrint}>
-                {isPaid ? <FaPrint /> : <FaFileInvoiceDollar />}
-                {isPaid ? 'Print Official Receipt' : 'Print Proforma Invoice'}
+              <button onClick={handleDownloadImage} disabled={isDownloading} className={styles.btnDownload}>
+                <FaDownload /> {isDownloading ? 'Generating Image...' : isPaid ? 'Download Receipt Image' : 'Download Invoice Image'}
               </button>
             </div>
           </div>

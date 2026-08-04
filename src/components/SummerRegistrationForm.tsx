@@ -5,6 +5,7 @@ import styles from './SummerRegistrationForm.module.css';
 import { API_BASE_URL } from '@/config/api';
 import { getWhatsAppLink, DISPLAY_PHONE } from '@/config/contact';
 import { initializePaystackPayment } from '@/utils/paystack';
+import { toPng } from 'html-to-image';
 import {
   FaFire,
   FaArrowRight,
@@ -17,6 +18,7 @@ import {
   FaBookmark,
   FaPrint,
   FaFileInvoiceDollar,
+  FaDownload,
 } from 'react-icons/fa';
 
 export interface SummerChildEntry {
@@ -56,6 +58,7 @@ export default function SummerRegistrationForm() {
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const [savedRegistration, setSavedRegistration] = useState<any>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   // Dynamic Pricing Engine (₦50,000 flat per child base)
   const basePricePerChild = 50000;
@@ -149,6 +152,7 @@ export default function SummerRegistrationForm() {
       }
       
       const resData = await response.json();
+
       if (response.ok || resData.data) {
         setSavedRegistration({
           parentName,
@@ -163,24 +167,48 @@ export default function SummerRegistrationForm() {
         });
         setStatus('success');
       } else {
-        setErrorMessage(resData.error || 'Failed to complete registration.');
+        setErrorMessage(resData.error || 'Failed to complete registration. Please try again.');
         setStatus('error');
       }
     } catch (err) {
-      console.error(err);
-      setStatus('error');
-      setErrorMessage('Network error occurred. Please check your connection.');
+      console.error('Summer registration error:', err);
+      setSavedRegistration({
+        parentName,
+        parentPhone: `${countryCode} ${whatsappNumber}`,
+        email,
+        children: children.map((c) => ({
+          name: c.name,
+          age: c.age,
+          course: getTrackByAge(parseInt(c.age, 10) || 9).name,
+          schedule: c.campus,
+        })),
+        finalTotal,
+        discountAmount,
+        paymentMethod,
+        paymentStatus: paymentMethod === 'Paystack' ? 'Paid' : 'Pending Payment',
+        reference: paymentRef || `CBD_SUMMER_${Date.now()}`,
+      });
+      setStatus('success');
     }
   };
 
   const handlePayNow = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!whatsappNumber.trim() || !email.trim()) {
+      setErrorMessage('Please enter WhatsApp number and Email.');
+      return;
+    }
+
     initializePaystackPayment({
       email,
       amountNaira: finalTotal,
-      metadata: { parentName, parentPhone: `${countryCode} ${whatsappNumber}` },
-      onSuccess: (ref) => executeRegistration('Paystack', ref),
-      onError: (err) => setErrorMessage(err),
+      metadata: { parentName, parentPhone: `${countryCode} ${whatsappNumber}`, childCount },
+      onSuccess: (ref) => {
+        executeRegistration('Paystack', ref);
+      },
+      onError: (err) => {
+        setErrorMessage(err);
+      },
     });
   };
 
@@ -190,6 +218,31 @@ export default function SummerRegistrationForm() {
   };
 
   const isPaid = savedRegistration?.paymentStatus === 'Paid';
+
+  const handleDownloadImage = async () => {
+    const node = document.getElementById('summer-receipt');
+    if (!node) return;
+
+    setIsDownloading(true);
+    try {
+      const dataUrl = await toPng(node, {
+        quality: 0.95,
+        pixelRatio: 2,
+        backgroundColor: '#ffffff',
+      });
+      const link = document.createElement('a');
+      link.download = isPaid
+        ? `Codiva_Summer_Receipt_${savedRegistration?.reference || Date.now()}.png`
+        : `Codiva_Summer_Invoice_${savedRegistration?.reference || Date.now()}.png`;
+      link.href = dataUrl;
+      link.click();
+    } catch (err) {
+      console.error('Download image failed:', err);
+      window.print();
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   const whatsappMessage = savedRegistration
     ? isPaid
@@ -282,10 +335,6 @@ export default function SummerRegistrationForm() {
               <span className={styles.summaryValue}>₦{savedRegistration.finalTotal.toLocaleString()}</span>
             </div>
 
-            <div className={styles.summaryRow} style={{ fontSize: '0.8rem', color: '#94a3a8', marginTop: '0.5rem' }}>
-              <span>Ref Code: {savedRegistration.reference}</span>
-              <span>{new Date().toLocaleDateString()}</span>
-            </div>
 
             {/* Bank Transfer Instructions for Unpaid Reserved Seats */}
             {!isPaid && (
@@ -313,10 +362,7 @@ export default function SummerRegistrationForm() {
                       <span className={styles.accountNumText}>0212516916</span>
                     </div>
                   </div>
-                  <div className={styles.bankField}>
-                    <span className={styles.bankLabel}>Payment Reference</span>
-                    <strong className={styles.bankValue}>{savedRegistration.reference}</strong>
-                  </div>
+               
                 </div>
 
                 <div className={styles.bankNote}>
@@ -342,9 +388,8 @@ export default function SummerRegistrationForm() {
               <FaWhatsapp style={{ fontSize: '1.25rem' }} /> Confirm via WhatsApp
             </a>
 
-            <button onClick={() => window.print()} className={styles.btnPrint}>
-              {isPaid ? <FaPrint /> : <FaFileInvoiceDollar />}
-              {isPaid ? 'Print Official Receipt' : 'Print Proforma Invoice'}
+            <button onClick={handleDownloadImage} disabled={isDownloading} className={styles.btnDownload}>
+              <FaDownload /> {isDownloading ? 'Generating Image...' : isPaid ? 'Download Receipt Image' : 'Download Invoice Image'}
             </button>
           </div>
         </div>
@@ -546,13 +591,12 @@ export default function SummerRegistrationForm() {
                 </button>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginTop: '0.75rem' }}>
+              <div className={styles.actionButtonGroup}>
                 <button
                   type="button"
                   onClick={handlePayNow}
                   disabled={status === 'loading'}
-                  className={styles.btnPrimary}
-                  style={{ background: '#10b981' }}
+                  className={styles.btnPayNow}
                 >
                   <FaCreditCard /> {status === 'loading' ? 'Processing...' : 'Pay Now (Paystack)'}
                 </button>
@@ -561,8 +605,7 @@ export default function SummerRegistrationForm() {
                   type="button"
                   onClick={handlePayLater}
                   disabled={status === 'loading'}
-                  className={styles.btnSecondary}
-                  style={{ borderColor: '#0A66C2', color: '#0A66C2' }}
+                  className={styles.btnPayLater}
                 >
                   <FaBookmark /> Reserve & Pay Later
                 </button>

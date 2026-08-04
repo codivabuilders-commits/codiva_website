@@ -226,57 +226,95 @@
 .actionButtonGroup {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-  margin-top: 1rem;
+  gap: 0.65rem;
+  margin-top: 0.85rem;
 }
 
 @media (max-width: 500px) {
   .actionButtonGroup {
     grid-template-columns: 1fr;
+    gap: 0.5rem;
   }
 }
 
 .btnPayNow {
-  background: #10b981;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: #ffffff;
   border: none;
-  padding: 0.95rem;
-  border-radius: 12px;
-  font-size: 1rem;
-  font-weight: 800;
+  padding: 0.7rem 0.9rem;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-weight: 700;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+  gap: 0.4rem;
+  box-shadow: 0 3px 10px rgba(16, 185, 129, 0.25);
   transition: all 0.2s ease;
 }
 
-.btnPayNow:hover {
-  background: #059669;
+.btnPayNow:hover:not(:disabled) {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
   transform: translateY(-1px);
+  box-shadow: 0 5px 14px rgba(16, 185, 129, 0.35);
+}
+
+.btnPayNow:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
 }
 
 .btnPayLater {
-  background: #ffffff;
-  color: #0A66C2;
-  border: 2px solid #0A66C2;
-  padding: 0.95rem;
-  border-radius: 12px;
-  font-size: 0.95rem;
+  background: #f8fafc;
+  color: #0284c7;
+  border: 1.5px solid #0284c7;
+  padding: 0.7rem 0.9rem;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  transition: all 0.2s ease;
+}
+
+.btnPayLater:hover:not(:disabled) {
+  background: #f0f9ff;
+  border-color: #0369a1;
+  color: #0369a1;
+  transform: translateY(-1px);
+}
+
+.btnPayLater:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.btnDownload {
+  background: #0f172a;
+  color: #ffffff;
+  border: none;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  font-size: 0.875rem;
   font-weight: 700;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
+  box-shadow: 0 3px 10px rgba(15, 23, 42, 0.15);
   transition: all 0.2s ease;
 }
 
-.btnPayLater:hover {
-  background: #eff6ff;
+.btnDownload:hover {
+  background: #1e293b;
+  transform: translateY(-1px);
 }
+
 
 /* Receipt / Confirmation Screen */
 .successContainer {
