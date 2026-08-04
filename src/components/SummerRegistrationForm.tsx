@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import styles from './SummerRegistrationForm.module.css';
+import { API_BASE_URL } from '@/config/api';
 import {
   FaFire,
   FaArrowRight,
@@ -119,11 +120,20 @@ export default function SummerRegistrationForm() {
         agreeUpdates: formData.agreeUpdates,
       };
 
-      const response = await fetch('/api/summer-register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
+      let response;
+      try {
+        response = await fetch(`${API_BASE_URL}/api/summer-register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+      } catch (directErr) {
+        response = await fetch('/api/summer-register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+      }
 
       if (response.ok) {
         setStatus('success');

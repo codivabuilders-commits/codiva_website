@@ -42,20 +42,20 @@ export default function AdminDashboardPage() {
     setLoading(true);
     setError('');
     try {
-      // Try Next.js API route first
-      const res = await fetch('/api/admin/users', { cache: 'no-store' });
+      // Try configured API_BASE_URL backend first
+      let res;
+      try {
+        res = await fetch(`${API_BASE_URL}/api/admin/users`, { cache: 'no-store' });
+      } catch (err) {
+        // Fallback to Next.js API route proxy if direct fetch fails
+        res = await fetch('/api/admin/users', { cache: 'no-store' });
+      }
+
       if (res.ok) {
         const data = await res.json();
         setUsers(data.users || []);
       } else {
-        // Fallback to Express backend directly
-        const expRes = await fetch(`${API_BASE_URL}/api/admin/users`, { cache: 'no-store' });
-        if (expRes.ok) {
-          const expData = await expRes.json();
-          setUsers(expData.users || []);
-        } else {
-          setError('Could not load registrations. Please check backend server.');
-        }
+        setError('Could not load registrations. Please check backend server.');
       }
     } catch (err: any) {
       console.error('Failed to fetch admin registered users:', err);
