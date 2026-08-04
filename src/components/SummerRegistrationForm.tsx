@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import styles from './SummerRegistrationForm.module.css';
 import { API_BASE_URL } from '@/config/api';
-import { getWhatsAppLink } from '@/config/contact';
+import { getWhatsAppLink, DISPLAY_PHONE } from '@/config/contact';
 import { initializePaystackPayment } from '@/utils/paystack';
 import {
   FaFire,
@@ -16,6 +16,7 @@ import {
   FaCreditCard,
   FaBookmark,
   FaPrint,
+  FaFileInvoiceDollar,
 } from 'react-icons/fa';
 
 export interface SummerChildEntry {
@@ -24,90 +25,73 @@ export interface SummerChildEntry {
   campus: string;
 }
 
-export function getTrackByAge(ageNum: number) {
-  if (ageNum >= 6 && ageNum <= 8) {
-    return {
-      name: 'Junior Builders',
-      theme: 'Imagine & Create',
-      ageLabel: 'Ages 6–8',
-    };
-  } else if (ageNum >= 9 && ageNum <= 12) {
-    return {
-      name: 'Intermediate Builders',
-      theme: 'Design & Build',
-      ageLabel: 'Ages 9–12',
-    };
-  } else if (ageNum >= 13 && ageNum <= 17) {
-    return {
-      name: 'Senior Builders',
-      theme: 'Build & Innovate',
-      ageLabel: 'Ages 13–17',
-    };
-  }
-  return {
-    name: 'Custom Builder Track',
-    theme: 'Custom Track Assignment',
-    ageLabel: 'Ages 6–17',
-  };
+const tracksData = [
+  { minAge: 6, maxAge: 8, name: 'Junior Builders (Explore & Play)', ageLabel: 'Ages 6–8', tools: 'Scratch Jr, Block Coding, Canva' },
+  { minAge: 9, maxAge: 12, name: 'Intermediate Builders (Design & Build)', ageLabel: 'Ages 9–12', tools: 'Scratch 3.0, HTML/CSS, AI Tools' },
+  { minAge: 13, maxAge: 17, name: 'Senior Builders (Build & Innovate)', ageLabel: 'Ages 13–17', tools: 'Python, Web Apps, Generative AI' },
+];
+
+function getTrackByAge(ageNum: number) {
+  if (ageNum <= 8) return tracksData[0];
+  if (ageNum <= 12) return tracksData[1];
+  return tracksData[2];
 }
 
 export default function SummerRegistrationForm() {
   const [step, setStep] = useState<1 | 2>(1);
-  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
-  const [errorMessage, setErrorMessage] = useState('');
-  const [savedRegistration, setSavedRegistration] = useState<any>(null);
 
+  // Form State
   const [parentName, setParentName] = useState('');
   const [countryCode, setCountryCode] = useState('+234');
   const [whatsappNumber, setWhatsappNumber] = useState('');
   const [email, setEmail] = useState('');
+  const [preferredCampus, setPreferredCampus] = useState('Online / Virtual Campus');
   const [agreeUpdates, setAgreeUpdates] = useState(true);
-  const [websiteHoneypot, setWebsiteHoneypot] = useState('');
 
+  // Multi-children state
   const [children, setChildren] = useState<SummerChildEntry[]>([
     { name: '', age: '9', campus: 'Online / Virtual Campus' },
   ]);
 
-  // Pricing Engine (₦50,000 per child base)
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [errorMessage, setErrorMessage] = useState('');
+  const [savedRegistration, setSavedRegistration] = useState<any>(null);
+
+  // Dynamic Pricing Engine (₦50,000 flat per child base)
   const basePricePerChild = 50000;
   const childCount = children.length;
-  const subtotal = childCount * basePricePerChild;
+  const rawSubtotal = childCount * basePricePerChild;
+  const discountPercentage = childCount >= 2 ? 0.2 : 0;
+  const discountAmount = rawSubtotal * discountPercentage;
+  const finalTotal = rawSubtotal - discountAmount;
   const hasDiscount = childCount >= 2;
-  const discountPercentage = hasDiscount ? 0.20 : 0;
-  const discountAmount = subtotal * discountPercentage;
-  const finalTotal = subtotal - discountAmount;
 
   const handleAddChild = () => {
-    setChildren((prev) => [
-      ...prev,
-      { name: '', age: '10', campus: 'Online / Virtual Campus' },
-    ]);
+    setChildren([...children, { name: '', age: '9', campus: 'Online / Virtual Campus' }]);
   };
 
   const handleRemoveChild = (index: number) => {
-    if (children.length <= 1) return;
-    setChildren((prev) => prev.filter((_, i) => i !== index));
+    if (children.length > 1) {
+      setChildren(children.filter((_, i) => i !== index));
+    }
   };
 
   const handleChildChange = (index: number, field: keyof SummerChildEntry, value: string) => {
-    setChildren((prev) => {
-      const copy = [...prev];
-      copy[index] = { ...copy[index], [field]: value };
-      return copy;
-    });
+    const updated = [...children];
+    updated[index][field] = value;
+    setChildren(updated);
   };
 
   const handleNextStep = (e: React.FormEvent) => {
     e.preventDefault();
     if (!parentName.trim()) {
-      setErrorMessage('Please enter Parent / Guardian Name.');
+      setErrorMessage('Please enter parent full name.');
       return;
     }
-    for (let i = 0; i < children.length; i++) {
-      if (!children[i].name.trim()) {
-        setErrorMessage(`Please fill in Child #${i + 1} full name.`);
-        return;
-      }
+    const invalidChild = children.find((c) => !c.name.trim());
+    if (invalidChild) {
+      setErrorMessage('Please enter full name for all children.');
+      return;
     }
     setErrorMessage('');
     setStep(2);
@@ -119,44 +103,36 @@ export default function SummerRegistrationForm() {
   };
 
   const executeRegistration = async (paymentMethod: 'Paystack' | 'Pay Later', paymentRef?: string) => {
-    if (websiteHoneypot) {
-      setStatus('success');
-      return;
-    }
-
-    if (!whatsappNumber.trim() || !email.trim()) {
-      setErrorMessage('Please provide your WhatsApp phone number and Email address.');
-      return;
-    }
-
     setStatus('loading');
     setErrorMessage('');
 
-    try {
-      const fullPhone = `${countryCode} ${whatsappNumber}`;
-      const processedChildren = children.map((c) => {
-        const trackInfo = getTrackByAge(parseInt(c.age, 10) || 9);
-        return {
-          name: c.name,
-          age: c.age,
-          course: `${trackInfo.name} (${trackInfo.theme})`,
-          schedule: c.campus,
-        };
-      });
+    const fullPhone = `${countryCode} ${whatsappNumber}`.trim();
 
-      const payload = {
-        parentName,
-        parentPhone: fullPhone,
-        parentEmail: email,
-        children: processedChildren,
-        preferredCampus: children[0]?.campus || 'Online / Virtual Campus',
-        agreeUpdates,
-        basePricePerChild,
-        paymentMethod,
-        paymentStatus: paymentMethod === 'Paystack' ? 'Paid' : 'Pending Payment',
-        paymentReference: paymentRef || `CBD_SUMMER_${Date.now()}`,
+    const processedChildren = children.map((c) => {
+      const ageNum = parseInt(c.age, 10) || 9;
+      const track = getTrackByAge(ageNum);
+      return {
+        name: c.name,
+        age: c.age,
+        course: track.name,
+        schedule: c.campus || preferredCampus,
       };
+    });
 
+    const payload = {
+      parentName,
+      parentPhone: fullPhone,
+      parentEmail: email,
+      children: processedChildren,
+      preferredCampus,
+      agreeUpdates,
+      basePricePerChild,
+      paymentMethod,
+      paymentStatus: paymentMethod === 'Paystack' ? 'Paid' : 'Pending Payment',
+      paymentReference: paymentRef || `CBD_SUMMER_${Date.now()}`,
+    };
+
+    try {
       let response;
       try {
         response = await fetch(`${API_BASE_URL}/api/summer-register`, {
@@ -164,16 +140,15 @@ export default function SummerRegistrationForm() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         });
-      } catch (directErr) {
+      } catch (e) {
         response = await fetch('/api/summer-register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         });
       }
-
+      
       const resData = await response.json();
-
       if (response.ok || resData.data) {
         setSavedRegistration({
           parentName,
@@ -188,48 +163,24 @@ export default function SummerRegistrationForm() {
         });
         setStatus('success');
       } else {
-        setErrorMessage(resData.error || 'Failed to complete registration. Please try again.');
+        setErrorMessage(resData.error || 'Failed to complete registration.');
         setStatus('error');
       }
     } catch (err) {
-      console.error('Summer registration error:', err);
-      setSavedRegistration({
-        parentName,
-        parentPhone: `${countryCode} ${whatsappNumber}`,
-        email,
-        children: children.map((c) => ({
-          name: c.name,
-          age: c.age,
-          course: getTrackByAge(parseInt(c.age, 10) || 9).name,
-          schedule: c.campus,
-        })),
-        finalTotal,
-        discountAmount,
-        paymentMethod,
-        paymentStatus: paymentMethod === 'Paystack' ? 'Paid' : 'Pending Payment',
-        reference: paymentRef || `CBD_SUMMER_${Date.now()}`,
-      });
-      setStatus('success');
+      console.error(err);
+      setStatus('error');
+      setErrorMessage('Network error occurred. Please check your connection.');
     }
   };
 
   const handlePayNow = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!whatsappNumber.trim() || !email.trim()) {
-      setErrorMessage('Please enter WhatsApp number and Email.');
-      return;
-    }
-
     initializePaystackPayment({
       email,
       amountNaira: finalTotal,
-      metadata: { parentName, parentPhone: `${countryCode} ${whatsappNumber}`, childCount },
-      onSuccess: (ref) => {
-        executeRegistration('Paystack', ref);
-      },
-      onError: (err) => {
-        setErrorMessage(err);
-      },
+      metadata: { parentName, parentPhone: `${countryCode} ${whatsappNumber}` },
+      onSuccess: (ref) => executeRegistration('Paystack', ref),
+      onError: (err) => setErrorMessage(err),
     });
   };
 
@@ -238,33 +189,66 @@ export default function SummerRegistrationForm() {
     executeRegistration('Pay Later');
   };
 
+  const isPaid = savedRegistration?.paymentStatus === 'Paid';
+
   const whatsappMessage = savedRegistration
-    ? `Hello Codiva Builders! 🎉 I just registered for Summer Innovation Academy 2026.\n` +
-      `Parent: ${savedRegistration.parentName}\n` +
-      `Enrolled Children: ${savedRegistration.children.map((c: any) => `${c.name} (${c.course})`).join(', ')}\n` +
-      `Status: ${savedRegistration.paymentStatus}\n` +
-      `Total: ₦${savedRegistration.finalTotal.toLocaleString()}`
-    : 'Hello Codiva Builders! I just registered my child for the Summer Innovation Academy.';
+    ? isPaid
+      ? `Hello Codiva Builders! 🎉 I completed payment for Summer Innovation Academy 2026.\n` +
+        `Parent: ${savedRegistration.parentName}\n` +
+        `Children: ${savedRegistration.children.map((c: any) => `${c.name} (${c.course})`).join(', ')}\n` +
+        `Total Paid: ₦${savedRegistration.finalTotal.toLocaleString()}\n` +
+        `Ref: ${savedRegistration.reference}`
+      : `Hello Codiva Builders! 🔒 I reserved a seat for Summer Innovation Academy 2026.\n` +
+        `Parent: ${savedRegistration.parentName}\n` +
+        `Children: ${savedRegistration.children.map((c: any) => `${c.name} (${c.course})`).join(', ')}\n` +
+        `Total Due: ₦${savedRegistration.finalTotal.toLocaleString()}\n` +
+        `Ref: ${savedRegistration.reference}`
+    : 'Hello Codiva Builders! I have a question about summer registration.';
 
   return (
     <div className={styles.container} id="register">
       {status === 'success' && savedRegistration ? (
         <div className={styles.successContainer}>
-          <div className={styles.successIcon} style={{ color: '#10b981' }}>
-            <FaCheckCircle />
+          <div className={styles.successIcon} style={{ color: isPaid ? '#10b981' : '#f59e0b' }}>
+            {isPaid ? <FaCheckCircle /> : <FaBookmark />}
           </div>
-          <h2 className={styles.successTitle}>🎉 Congratulations!</h2>
+          
+          <h2 className={styles.successTitle}>
+            {isPaid ? '🎉 Congratulations! Registration Complete' : '🔒 Seat Secured Successfully!'}
+          </h2>
+          
           <p className={styles.successDesc}>
-            Your child has been successfully enrolled in <strong>Codiva Builders Summer Program</strong>.
-            <br />
-            A confirmation has been sent to your email and WhatsApp. We can't wait to meet your child!
+            {isPaid ? (
+              <>
+                Your child has been successfully enrolled in <strong>Codiva Builders Summer Program</strong>.
+                <br />
+                A confirmation receipt has been generated. We can't wait to meet your child!
+              </>
+            ) : (
+              <>
+                Your seat has been reserved for <strong>Summer Innovation Academy 2026</strong>!
+                <br />
+                Please review your proforma invoice below and complete payment to finalize registration.
+              </>
+            )}
           </p>
 
           <div className={styles.summaryCard} id="summer-receipt">
+            {/* Header Branding (Visible on Print & Screen) */}
+            <div className={styles.printHeader}>
+              <div className={styles.brandTitle}>
+                <span style={{ color: '#FF6B00' }}>Codiva</span>
+                <span style={{ color: '#0A66C2' }}>Builders</span>
+              </div>
+              <div className={styles.brandSub}>Summer Innovation Academy 2026 • Codiva Builders</div>
+            </div>
+
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.5rem' }}>
-              <span style={{ fontWeight: 800, color: '#0f172a' }}>Summer Academy 2026 Enrollment</span>
-              <span style={{ fontWeight: 700, color: savedRegistration.paymentStatus === 'Paid' ? '#16a34a' : '#d97706' }}>
-                {savedRegistration.paymentStatus === 'Paid' ? 'Paid ✓' : 'Pending Payment (Spot Reserved)'}
+              <span style={{ fontWeight: 800, color: '#0f172a' }}>
+                {isPaid ? 'OFFICIAL PAYMENT RECEIPT' : 'PROFORMA INVOICE / SEAT RESERVATION'}
+              </span>
+              <span style={{ fontWeight: 700, color: isPaid ? '#16a34a' : '#d97706' }}>
+                {isPaid ? 'Paid ✓' : 'Seat Reserved (Pending Payment)'}
               </span>
             </div>
 
@@ -281,7 +265,7 @@ export default function SummerRegistrationForm() {
               <strong style={{ fontSize: '0.85rem', color: '#0A66C2' }}>Enrolled Children:</strong>
               {savedRegistration.children.map((c: any, idx: number) => (
                 <div key={idx} style={{ fontSize: '0.85rem', marginTop: '0.25rem' }}>
-                  • <strong>{c.name}</strong> (Age {c.age}) — {c.course}
+                  • <strong>{c.name}</strong> (Age {c.age}) — {c.course} ({c.schedule})
                 </div>
               ))}
             </div>
@@ -294,12 +278,61 @@ export default function SummerRegistrationForm() {
             )}
 
             <div className={styles.summaryRow} style={{ fontWeight: 800, fontSize: '1.05rem', marginTop: '0.5rem' }}>
-              <span className={styles.summaryLabel}>Total Amount:</span>
+              <span className={styles.summaryLabel}>{isPaid ? 'Total Paid:' : 'Total Due:'}</span>
               <span className={styles.summaryValue}>₦{savedRegistration.finalTotal.toLocaleString()}</span>
+            </div>
+
+            <div className={styles.summaryRow} style={{ fontSize: '0.8rem', color: '#94a3a8', marginTop: '0.5rem' }}>
+              <span>Ref Code: {savedRegistration.reference}</span>
+              <span>{new Date().toLocaleDateString()}</span>
+            </div>
+
+            {/* Bank Transfer Instructions for Unpaid Reserved Seats */}
+            {!isPaid && (
+              <div className={styles.bankDetailsBox}>
+                <div className={styles.bankHeader}>
+                  <span className={styles.bankTitleIcon}>⚡</span>
+                  <div>
+                    <div className={styles.bankTitle}>Fast Manual Bank Transfer</div>
+                    <div className={styles.bankSubText}>For quick seat confirmation, pay directly into this account:</div>
+                  </div>
+                </div>
+
+                <div className={styles.bankGrid}>
+                  <div className={styles.bankField}>
+                    <span className={styles.bankLabel}>Bank Name</span>
+                    <strong className={styles.bankValue}>GTBank (Guaranty Trust)</strong>
+                  </div>
+                  <div className={styles.bankField}>
+                    <span className={styles.bankLabel}>Account Name</span>
+                    <strong className={styles.bankValue}>Omidoyin Ayodeji</strong>
+                  </div>
+                  <div className={styles.bankFieldFull}>
+                    <span className={styles.bankLabel}>Account Number</span>
+                    <div className={styles.accountNumberBadge}>
+                      <span className={styles.accountNumText}>0212516916</span>
+                    </div>
+                  </div>
+                  <div className={styles.bankField}>
+                    <span className={styles.bankLabel}>Payment Reference</span>
+                    <strong className={styles.bankValue}>{savedRegistration.reference}</strong>
+                  </div>
+                </div>
+
+                <div className={styles.bankNote}>
+                  📲 <strong>Next Step:</strong> After completing transfer, send proof/receipt on WhatsApp to <strong>{DISPLAY_PHONE}</strong> for immediate seat confirmation.
+                </div>
+              </div>
+            )}
+
+            {/* Footer Branding (Visible on Print & Screen) */}
+            <div className={styles.printFooter}>
+              <div>📍 Lagos, Nigeria | 📧 codivabuilders@gmail.com | 📱 {DISPLAY_PHONE}</div>
+              <div>Codiva Builders • Kids & Teens Subsidiary of Veleon Academy</div>
             </div>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          <div className={styles.receiptActionButtons}>
             <a
               href={getWhatsAppLink(whatsappMessage)}
               target="_blank"
@@ -309,8 +342,9 @@ export default function SummerRegistrationForm() {
               <FaWhatsapp style={{ fontSize: '1.25rem' }} /> Confirm via WhatsApp
             </a>
 
-            <button onClick={() => window.print()} style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', padding: '0.75rem', borderRadius: '10px', fontWeight: 600, cursor: 'pointer' }}>
-              <FaPrint /> Print / Save Receipt
+            <button onClick={() => window.print()} className={styles.btnPrint}>
+              {isPaid ? <FaPrint /> : <FaFileInvoiceDollar />}
+              {isPaid ? 'Print Official Receipt' : 'Print Proforma Invoice'}
             </button>
           </div>
         </div>
@@ -343,15 +377,8 @@ export default function SummerRegistrationForm() {
 
           {step === 1 ? (
             <form className={styles.form} onSubmit={handleNextStep}>
-              <input
-                type="text"
-                name="websiteHoneypot"
-                value={websiteHoneypot}
-                onChange={(e) => setWebsiteHoneypot(e.target.value)}
-                className={styles.honeyInput}
-                tabIndex={-1}
-                autoComplete="off"
-              />
+
+
 
               <div className={styles.formGroup}>
                 <label className={styles.label}>Parent / Guardian Name *</label>
@@ -420,7 +447,7 @@ export default function SummerRegistrationForm() {
                     <div className={styles.trackPreviewCard} style={{ marginTop: '0.75rem' }}>
                       <div className={styles.trackInfo}>
                         <span className={styles.trackTag}>Assigned Track</span>
-                        <span className={styles.trackTitle}>{track.name} ({track.theme})</span>
+                        <span className={styles.trackTitle}>{track.name}</span>
                       </div>
                       <span className={styles.trackBadge}>{track.ageLabel}</span>
                     </div>
@@ -487,7 +514,7 @@ export default function SummerRegistrationForm() {
               <div style={{ background: '#fff7ed', border: '1.5px solid #fdba74', borderRadius: '12px', padding: '1rem', margin: '1rem 0' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', color: '#475569' }}>
                   <span>Base Fee (₦50,000 × {childCount}):</span>
-                  <span>₦{subtotal.toLocaleString()}</span>
+                  <span>₦{rawSubtotal.toLocaleString()}</span>
                 </div>
 
                 {hasDiscount && (

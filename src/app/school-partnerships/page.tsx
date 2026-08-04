@@ -72,7 +72,7 @@ export default function SchoolPartnershipsPage() {
               <FaWhatsapp /> Partner With Us
             </a>
             <a
-              href="mailto:hello@codivabuilders.com?subject=School%20Partnership%20Inquiry"
+              href="mailto:codivabuilders@gmail.com?subject=School%20Partnership%20Inquiry"
               className="btn btn-secondary"
               style={{ borderColor: 'rgba(255,255,255,0.5)', color: 'white', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
             >
@@ -189,7 +189,7 @@ export default function SchoolPartnershipsPage() {
               <FaWhatsapp /> WhatsApp Us
             </a>
             <a
-              href="mailto:hello@codivabuilders.com?subject=School%20Partnership%20Inquiry"
+              href="mailto:codivabuilders@gmail.com?subject=School%20Partnership%20Inquiry"
               className="btn"
               style={{ background: 'rgba(255,255,255,0.15)', color: 'white', border: '1px solid rgba(255,255,255,0.4)', fontWeight: '700', display: 'inline-flex', gap: '0.5rem', alignItems: 'center' }}
             >
@@ -202,7 +202,7 @@ export default function SchoolPartnershipsPage() {
       {/* FOOTER */}
       <footer>
         <div className={styles.contact}>
-          <p>📍 Lagos, Nigeria &nbsp;|&nbsp; 📧 hello@codivabuilders.com &nbsp;|&nbsp; 📱 @CodivaBuilders</p>
+          <p>📍 Lagos, Nigeria &nbsp;|&nbsp; 📧 codivabuilders@gmail.com &nbsp;|&nbsp; 📱 @CodivaBuilders</p>
         </div>
         <div className={styles.footer}>© 2026 Codiva Builders (Subsidiary of Veleon Academy). All rights reserved.</div>
       </footer>

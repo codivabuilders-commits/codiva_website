@@ -314,7 +314,7 @@ export default function Home() {
               </div>
               <div className={styles.footerContact}>
                 <p>📍 Lagos, Nigeria</p>
-                <p>📧 hello@codivabuilders.com</p>
+                <p>📧 codivabuilders@gmail.com</p>
                 <p>📱 @CodivaBuilders</p>
               </div>
             </div>

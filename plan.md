@@ -119,7 +119,7 @@ Contact Us
 
 📍 Lagos, Nigeria
 📞 +234 xxx xxx xxxx
-📧 hello@codivabuilders.com
+📧 codivabuilders@gmail.com
 
 📱 Instagram: @CodivaBuilders
 

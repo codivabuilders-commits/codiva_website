@@ -3,9 +3,9 @@
 import React, { useState } from 'react';
 import styles from './EnrollmentForm.module.css';
 import { API_BASE_URL } from '@/config/api';
-import { getWhatsAppLink } from '@/config/contact';
+import { getWhatsAppLink, DISPLAY_PHONE } from '@/config/contact';
 import { initializePaystackPayment } from '@/utils/paystack';
-import { FaPlus, FaTrash, FaCreditCard, FaBookmark, FaWhatsapp, FaPrint, FaCheckCircle } from 'react-icons/fa';
+import { FaPlus, FaTrash, FaCreditCard, FaBookmark, FaWhatsapp, FaPrint, FaCheckCircle, FaFileInvoiceDollar } from 'react-icons/fa';
 
 interface ChildEntry {
   name: string;
@@ -25,77 +25,68 @@ export default function EnrollmentForm({ isOpen, onClose }: EnrollmentFormProps)
   const [parentPhone, setParentPhone] = useState('');
 
   const [children, setChildren] = useState<ChildEntry[]>([
-    { name: '', age: '8', course: 'Scratch Coding', schedule: 'Online' },
+    { name: '', age: '8', course: 'Scratch Coding', schedule: 'Weekend Saturday Classes' },
   ]);
 
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const [savedRegistration, setSavedRegistration] = useState<any>(null);
 
-  if (!isOpen) return null;
-
-  // Fee calculation engine (₦40,000 per child base)
   const basePricePerChild = 40000;
   const childCount = children.length;
-  const subtotal = childCount * basePricePerChild;
+  const rawSubtotal = childCount * basePricePerChild;
+  const discountPercentage = childCount >= 2 ? 0.2 : 0;
+  const discountAmount = rawSubtotal * discountPercentage;
+  const finalTotal = rawSubtotal - discountAmount;
   const hasDiscount = childCount >= 2;
-  const discountPercentage = hasDiscount ? 0.20 : 0;
-  const discountAmount = subtotal * discountPercentage;
-  const finalTotal = subtotal - discountAmount;
 
   const handleAddChild = () => {
-    setChildren((prev) => [
-      ...prev,
-      { name: '', age: '9', course: 'Web Development', schedule: 'Online' },
-    ]);
+    setChildren([...children, { name: '', age: '8', course: 'Scratch Coding', schedule: 'Weekend Saturday Classes' }]);
   };
 
   const handleRemoveChild = (index: number) => {
-    if (children.length <= 1) return;
-    setChildren((prev) => prev.filter((_, i) => i !== index));
+    if (children.length > 1) {
+      setChildren(children.filter((_, i) => i !== index));
+    }
   };
 
   const handleChildChange = (index: number, field: keyof ChildEntry, value: string) => {
-    setChildren((prev) => {
-      const copy = [...prev];
-      copy[index] = { ...copy[index], [field]: value };
-      return copy;
-    });
+    const updated = [...children];
+    updated[index][field] = value;
+    setChildren(updated);
   };
 
-  const validateForm = (): boolean => {
+  const handlePrintReceipt = () => {
+    window.print();
+  };
+
+  const executeRegistration = async (paymentMethod: 'Paystack' | 'Pay Later', paymentRef?: string) => {
     if (!parentName.trim() || !parentEmail.trim() || !parentPhone.trim()) {
-      setErrorMessage('Please fill in all parent contact fields (Name, Email, Phone).');
-      return false;
+      setErrorMessage('Please fill in all parent details.');
+      return;
     }
 
-    for (let i = 0; i < children.length; i++) {
-      if (!children[i].name.trim()) {
-        setErrorMessage(`Please enter the full name for Child #${i + 1}.`);
-        return false;
-      }
+    const invalidChild = children.find((c) => !c.name.trim());
+    if (invalidChild) {
+      setErrorMessage('Please fill in child details for all entries.');
+      return;
     }
 
-    setErrorMessage('');
-    return true;
-  };
-
-  const submitRegistration = async (paymentMethod: 'Paystack' | 'Pay Later', paymentRef?: string) => {
     setStatus('loading');
     setErrorMessage('');
 
-    try {
-      const payload = {
-        parentName,
-        parentEmail,
-        parentPhone,
-        children,
-        basePricePerChild,
-        paymentMethod,
-        paymentStatus: paymentMethod === 'Paystack' ? 'Paid' : 'Pending Payment',
-        paymentReference: paymentRef || `CBD_${Date.now()}`,
-      };
+    const payload = {
+      parentName,
+      parentEmail,
+      parentPhone,
+      children,
+      basePricePerChild,
+      paymentMethod,
+      paymentStatus: paymentMethod === 'Paystack' ? 'Paid' : 'Pending Payment',
+      paymentReference: paymentRef || `CBD_ENR_${Date.now()}`,
+    };
 
+    try {
       let response;
       try {
         response = await fetch(`${API_BASE_URL}/api/enroll`, {
@@ -103,7 +94,7 @@ export default function EnrollmentForm({ isOpen, onClose }: EnrollmentFormProps)
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         });
-      } catch (fetchErr) {
+      } catch (e) {
         response = await fetch('/api/enroll', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -127,12 +118,11 @@ export default function EnrollmentForm({ isOpen, onClose }: EnrollmentFormProps)
         });
         setStatus('success');
       } else {
-        setErrorMessage(resData.error || 'Failed to submit registration. Please try again.');
+        setErrorMessage(resData.error || 'Failed to complete registration.');
         setStatus('error');
       }
-    } catch (err: any) {
-      console.error('Registration submission error:', err);
-      // Fallback local display if server network fails
+    } catch (err) {
+      console.error('Registration API failed:', err);
       setSavedRegistration({
         parentName,
         parentEmail,
@@ -141,8 +131,8 @@ export default function EnrollmentForm({ isOpen, onClose }: EnrollmentFormProps)
         finalTotal,
         discountAmount,
         paymentMethod,
-        paymentStatus: paymentMethod === 'Paystack' ? 'Paid' : 'Pending Payment',
-        reference: paymentRef || `CBD_${Date.now()}`,
+        paymentStatus: payload.paymentStatus,
+        reference: payload.paymentReference,
       });
       setStatus('success');
     }
@@ -150,38 +140,45 @@ export default function EnrollmentForm({ isOpen, onClose }: EnrollmentFormProps)
 
   const handlePayNow = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validateForm()) return;
+    if (!parentName.trim() || !parentEmail.trim() || !parentPhone.trim()) {
+      setErrorMessage('Please fill in all parent details first.');
+      return;
+    }
 
     initializePaystackPayment({
       email: parentEmail,
       amountNaira: finalTotal,
       metadata: { parentName, parentPhone, childCount },
-      onSuccess: (reference) => {
-        submitRegistration('Paystack', reference);
+      onSuccess: (ref) => {
+        executeRegistration('Paystack', ref);
       },
-      onError: (errMsg) => {
-        setErrorMessage(errMsg);
+      onError: (err) => {
+        setErrorMessage(err);
       },
     });
   };
 
   const handlePayLater = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validateForm()) return;
-    submitRegistration('Pay Later');
+    executeRegistration('Pay Later');
   };
 
-  const handlePrintReceipt = () => {
-    window.print();
-  };
+  if (!isOpen) return null;
+
+  const isPaid = savedRegistration?.paymentStatus === 'Paid';
 
   const whatsappMessage = savedRegistration
-    ? `Hello Codiva Builders! 🎉 I just registered my child(ren) for Codiva Builders.\n` +
-      `Parent: ${savedRegistration.parentName}\n` +
-      `Children: ${savedRegistration.children.map((c: any) => `${c.name} (${c.course})`).join(', ')}\n` +
-      `Total: ₦${savedRegistration.finalTotal.toLocaleString()}\n` +
-      `Status: ${savedRegistration.paymentStatus}\n` +
-      `Ref: ${savedRegistration.reference}`
+    ? isPaid
+      ? `Hello Codiva Builders! 🎉 I completed payment for my child's enrollment.\n` +
+        `Parent: ${savedRegistration.parentName}\n` +
+        `Children: ${savedRegistration.children.map((c: any) => `${c.name} (${c.course})`).join(', ')}\n` +
+        `Total Paid: ₦${savedRegistration.finalTotal.toLocaleString()}\n` +
+        `Ref: ${savedRegistration.reference}`
+      : `Hello Codiva Builders! 🔒 I have reserved a seat for my child.\n` +
+        `Parent: ${savedRegistration.parentName}\n` +
+        `Children: ${savedRegistration.children.map((c: any) => `${c.name} (${c.course})`).join(', ')}\n` +
+        `Total Due: ₦${savedRegistration.finalTotal.toLocaleString()}\n` +
+        `Ref: ${savedRegistration.reference}`
     : 'Hello Codiva Builders! I have a question about my enrollment.';
 
   return (
@@ -193,28 +190,45 @@ export default function EnrollmentForm({ isOpen, onClose }: EnrollmentFormProps)
 
         {status === 'success' && savedRegistration ? (
           <div className={styles.successContainer}>
-            <div className={styles.successIcon} style={{ color: '#10b981' }}>
-              <FaCheckCircle />
+            <div className={styles.successIcon} style={{ color: isPaid ? '#10b981' : '#f59e0b' }}>
+              {isPaid ? <FaCheckCircle /> : <FaBookmark />}
             </div>
-            <h2 className={styles.successTitle}>🎉 Congratulations!</h2>
+            
+            <h2 className={styles.successTitle}>
+              {isPaid ? '🎉 Congratulations! Enrollment Complete' : '🔒 Seat Reserved Successfully!'}
+            </h2>
+            
             <p className={styles.successSubtext}>
-              Your child has been successfully enrolled in <strong>Codiva Builders Academy</strong>.
-              <br />
-              A confirmation has been sent to your email and WhatsApp. We can't wait to meet your child!
+              {isPaid ? (
+                <>
+                  Your child has been successfully enrolled in <strong>Codiva Builders Academy</strong>.
+                  <br />
+                  A confirmation receipt has been generated. We can't wait to meet your child!
+                </>
+              ) : (
+                <>
+                  Your seat has been reserved at <strong>Codiva Builders Academy</strong>!
+                  <br />
+                  Please review your proforma invoice below and complete payment to finalize registration.
+                </>
+              )}
             </p>
 
-            {/* Printable Receipt Card */}
             <div className={styles.receiptCard} id="enrollment-receipt">
+              <div className={styles.printHeader}>
+                <div className={styles.brandTitle}>
+                  <span style={{ color: '#FF6B00' }}>Codiva</span>
+                  <span style={{ color: '#0A66C2' }}>Builders</span>
+                </div>
+                <div className={styles.brandSub}>by Veleon Academy • Building Young Tech Leaders</div>
+              </div>
+
               <div className={styles.receiptHeader}>
-                <div className={styles.receiptTitle}>Official Enrollment Receipt</div>
-                <span
-                  className={
-                    savedRegistration.paymentStatus === 'Paid'
-                      ? styles.statusBadgePaid
-                      : styles.statusBadgePending
-                  }
-                >
-                  {savedRegistration.paymentStatus === 'Paid' ? 'Paid ✓' : 'Pending Payment (Reserved)'}
+                <div className={styles.receiptTitle}>
+                  {isPaid ? 'OFFICIAL PAYMENT RECEIPT' : 'PROFORMA INVOICE / SEAT RESERVATION'}
+                </div>
+                <span className={isPaid ? styles.statusBadgePaid : styles.statusBadgePending}>
+                  {isPaid ? 'Paid ✓' : 'Seat Reserved (Pending Payment)'}
                 </span>
               </div>
 
@@ -248,13 +262,55 @@ export default function EnrollmentForm({ isOpen, onClose }: EnrollmentFormProps)
               )}
 
               <div className={styles.receiptItem} style={{ fontWeight: 800, fontSize: '1.05rem', marginTop: '0.5rem' }}>
-                <span className={styles.receiptLabel}>Total Amount:</span>
+                <span className={styles.receiptLabel}>{isPaid ? 'Total Paid:' : 'Total Due:'}</span>
                 <span className={styles.receiptValue}>₦{savedRegistration.finalTotal.toLocaleString()}</span>
               </div>
 
               <div className={styles.receiptItem} style={{ fontSize: '0.8rem', color: '#94a3a8', marginTop: '0.5rem' }}>
                 <span>Ref Code: {savedRegistration.reference}</span>
                 <span>{new Date().toLocaleDateString()}</span>
+              </div>
+
+              {!isPaid && (
+                <div className={styles.bankDetailsBox}>
+                  <div className={styles.bankHeader}>
+                    <span className={styles.bankTitleIcon}>⚡</span>
+                    <div>
+                      <div className={styles.bankTitle}>Fast Manual Bank Transfer</div>
+                      <div className={styles.bankSubText}>For quick seat confirmation, pay directly into this account:</div>
+                    </div>
+                  </div>
+
+                  <div className={styles.bankGrid}>
+                    <div className={styles.bankField}>
+                      <span className={styles.bankLabel}>Bank Name</span>
+                      <strong className={styles.bankValue}>GTBank (Guaranty Trust)</strong>
+                    </div>
+                    <div className={styles.bankField}>
+                      <span className={styles.bankLabel}>Account Name</span>
+                      <strong className={styles.bankValue}>Omidoyin Ayodeji</strong>
+                    </div>
+                    <div className={styles.bankFieldFull}>
+                      <span className={styles.bankLabel}>Account Number</span>
+                      <div className={styles.accountNumberBadge}>
+                        <span className={styles.accountNumText}>0212516916</span>
+                      </div>
+                    </div>
+                    <div className={styles.bankField}>
+                      <span className={styles.bankLabel}>Payment Reference</span>
+                      <strong className={styles.bankValue}>{savedRegistration.reference}</strong>
+                    </div>
+                  </div>
+
+                  <div className={styles.bankNote}>
+                    📲 <strong>Next Step:</strong> After completing transfer, send proof/receipt on WhatsApp to <strong>{DISPLAY_PHONE}</strong> for immediate seat confirmation.
+                  </div>
+                </div>
+              )}
+
+              <div className={styles.printFooter}>
+                <div>📍 Lagos, Nigeria | 📧 codivabuilders@gmail.com | 📱 {DISPLAY_PHONE}</div>
+                <div>Codiva Builders • Kids & Teens Subsidiary of Veleon Academy</div>
               </div>
             </div>
 
@@ -269,7 +325,8 @@ export default function EnrollmentForm({ isOpen, onClose }: EnrollmentFormProps)
               </a>
 
               <button onClick={handlePrintReceipt} className={styles.btnPrint}>
-                <FaPrint /> Print / Save Receipt
+                {isPaid ? <FaPrint /> : <FaFileInvoiceDollar />}
+                {isPaid ? 'Print Official Receipt' : 'Print Proforma Invoice'}
               </button>
             </div>
           </div>

@@ -420,7 +420,7 @@ export default function AdminDashboardPage() {
 
         {/* Contact info footer */}
         <div style={{ textAlign: 'center', marginTop: '2rem', fontSize: '0.85rem', color: '#94a3b8' }}>
-          Admin contact: {DISPLAY_PHONE} | hello@codivabuilders.com
+          Admin contact: {DISPLAY_PHONE} | codivabuilders@gmail.com
         </div>
       </div>
     </div>
