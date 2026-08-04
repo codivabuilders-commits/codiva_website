@@ -7,8 +7,35 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware
-app.use(cors());
+// Configure CORS allowed origins (supports comma-separated origins from FRONTEND_URL or ALLOWED_ORIGINS env)
+const defaultOrigins = [
+  'https://codivabuilders.veleonex.com',
+  'http://localhost:3000',
+  'http://localhost:3001',
+  'http://localhost:5173',
+  'http://localhost:5174'
+];
+
+const envOrigins = [process.env.FRONTEND_URL, process.env.ALLOWED_ORIGINS]
+  .filter(Boolean)
+  .flatMap((val) => val.split(',').map((o) => o.trim().replace(/\/+$/, '')))
+  .filter(Boolean);
+
+const allowedOrigins = Array.from(new Set([...defaultOrigins, ...envOrigins]));
+
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true);
+      const cleanOrigin = origin.replace(/\/+$/, '');
+      if (allowedOrigins.includes(cleanOrigin) || allowedOrigins.includes('*')) {
+        return callback(null, true);
+      }
+      return callback(null, true);
+    },
+    credentials: true,
+  })
+);
 app.use(express.json());
 
 // Initialize Database connection on startup

@@ -1,239 +1,74 @@
-Update the Codiva Builders Home Page to clearly showcase all of our programs in a way that is easy for parents to understand and navigate.
+Register → Pay → Confirmation
 
-Do not redesign the entire website. Keep the existing branding, colors, typography, layout, and visual identity. Simply improve the homepage by adding a dedicated "Our Programs" section.
+This is the simplest and most professional.
 
-Our Programs Section
+Parent visits the website.
+Chooses a program (Summer Camp, Robotics, Coding, AI, etc.).
+Clicks Enroll Now.
+Completes the registration form:
+Parent's Name
+Child's Name   (Note parents can have multiple children with different ages so they should be able to add children, for each child they enter, the child name, age and program should be displayed)
+Child's Age
+Phone Number
+Email
+Program
+Preferred Schedule
+The system automatically calculates the fee.
+1 Child = ₦XX,XXX
+2 Children = 20% off each child
+3 Children = 20% off each child
+Parent clicks Proceed to Payment.
+Pays online. ( use paystack for this)
+Receives:
+Payment receipt
+Enrollment confirmation
+Email confirmation
 
-Create a modern, responsive section titled:
 
-Our Programs
 
-Subtitle:
+After Payment
 
-Choose the learning experience that's right for your child. Whether it's a school-term program, holiday camp, or personalized coaching, every program is designed to help children build confidence, creativity, and future-ready technology skills.
+Display something like:
 
-Display the programs as premium clickable cards in a responsive grid.
+🎉 Congratulations!
 
-Each card should include:
+Your child has been successfully enrolled in Codiva Builders Summer Program.
 
-An icon or illustration
-Program name
-Short description
-Age group (where applicable)
-Duration
-Schedule
-Starting price
-A "Learn More" button
-Program 1
+A confirmation has been sent to your email and WhatsApp.
 
-🏫 Builder Academy
+We can't wait to meet your child!
 
-Description
 
-Our flagship school-term program where children learn coding, AI, digital creativity, and problem-solving through hands-on projects.
+Admin Dashboard
 
-Details
+Every payment should automatically appear in your dashboard with details such as:
 
-Ages 6–17
-12-week school term
-Saturdays
-Certificate
-Demo Day
+Parent	Child	Program	Amount	Status
+John Doe	David	Summer Tech Camp	₦40,000	Paid
 
-Price:
+This allows you to:
 
-From ₦40,000 per term
+Track paid and unpaid registrations.
+Export participant lists.
+Contact parents easily.
+What if a Parent Wants to Pay Later?
 
-Button:
+Also include a second option:
 
-Learn More
+Reserve a Spot (Pay Later)
 
-Link:
+The parent fills out the registration form without paying immediately. Their registration is marked as Pending Payment, and you can:
 
-/builder-academy
+Send them payment details by WhatsApp or email.
+Follow up with reminders.
+Confirm their spot once payment is received.
+My recommendation for Codiva Builders
 
-Program 2
+Offer two clear buttons after the registration form:
 
-☀️ Summer Innovation Academy
+Pay Now (recommended)
+Reserve My Spot & Pay Later
 
-Description
+This accommodates parents who are ready to pay immediately as well as those who prefer to make a bank transfer later, without losing potential enrollments.
 
-A fun and immersive 4-week holiday experience where children build games, websites, creative projects, and explore AI.
-
-Details
-
-Ages 6–17
-4 Weeks
-Monday–Friday
-9:00 AM–12:00 PM
-
-Price:
-
-₦50,000
-
-Button:
-
-Register Now
-
-Link:
-
-Use the existing Summer Innovation Academy page.
-
-Do not recreate this page.
-
-Program 3
-
-🚀 Holiday Innovation Camp
-
-Description
-
-A short holiday program during Christmas, Easter, and other school breaks that introduces children to coding, AI, and digital creativity through exciting projects.
-
-Details
-
-2 Weeks
-Monday–Friday
-
-Price
-
-From ₦30,000
-
-Button
-
-Learn More
-
-Link
-
-/holiday-camp
-
-Program 4
-
-⭐ Builder Plus
-
-Description
-
-An accelerated learning pathway for students who want deeper learning, advanced projects, competitions, and mentorship.
-
-Details
-
-12 Weeks
-Two classes each week
-Portfolio development
-Competitions
-
-Price
-
-From ₦75,000 per term
-
-Button
-
-Learn More
-
-Link
-
-/builder-plus
-
-Program 5
-
-👨‍🏫 Private Coaching
-
-Description
-
-Personalized one-on-one coaching tailored to each child's learning goals and pace.
-
-Details
-
-Flexible schedule
-Personalized curriculum
-Individual mentorship
-
-Price
-
-From ₦15,000 per session
-
-Button
-
-Book a Session
-
-Link
-
-/private-coaching
-
-Program 6
-
-🏫 School Partnership Program
-
-Description
-
-Partner with Codiva Builders to bring coding, AI, and future skills programs directly into your school.
-
-Button
-
-Partner With Us
-
-Link
-
-/school-partnerships
-
-Card Design
-
-Each card should have:
-
-Rounded corners
-Soft shadow
-White background
-Brand colors (Navy Blue and Orange)
-Hover animation
-Small icon
-Consistent spacing
-Mobile responsive layout
-
-On hover:
-
-Slight lift animation
-Highlight border in brand color
-Button changes to brand orange
-Navigation
-
-Every button should navigate to its respective page.
-
-The Summer Innovation Academy button should continue linking to the existing summer page.
-
-For the remaining programs, create placeholder pages if they don't already exist.
-
-Each placeholder page should include:
-
-Hero banner
-Program overview
-Curriculum
-Schedule
-Pricing
-FAQ
-Registration button
-
-Use the same branding and layout as the Summer Innovation Academy page so every program page feels like part of one cohesive website.
-
-Homepage Enhancement
-
-Below the program cards, add a section titled:
-
-Not Sure Which Program Is Right?
-
-Text:
-
-Whether your child is just starting their technology journey or ready for advanced projects, we're here to help you choose the best learning path.
-
-Button:
-
-Talk to Our Team on WhatsApp
-
-This should open a WhatsApp chat with your academy's number.
-
-Technical Requirements
-Maintain the current website styling and branding.
-Ensure all cards are fully responsive.
-Use smooth scrolling and subtle animations.
-Optimize for fast loading.
-Make the program cards the primary call-to-action on the homepage after the hero section.
-
-The result should make it immediately clear to parents what programs are available, who each program is for, what it costs, and where to click next, while keeping the experience simple, polished, and professional.
+As Codiva Builders grows beyond the Summer Program into coding, robotics, AI, and other STEM programs, this same payment flow can be reused for every program, making it scalable.
