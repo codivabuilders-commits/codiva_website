@@ -7,35 +7,28 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Configure CORS allowed origins (supports comma-separated origins from FRONTEND_URL or ALLOWED_ORIGINS env)
-const defaultOrigins = [
-  'https://codivabuilders.veleonex.com',
-  'http://localhost:3000',
-  'http://localhost:3001',
-  'http://localhost:5173',
-  'http://localhost:5174'
-];
+// Universal CORS middleware to guarantee CORS headers on all requests & preflights
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  } else {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+  }
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
 
-const envOrigins = [process.env.FRONTEND_URL, process.env.ALLOWED_ORIGINS]
-  .filter(Boolean)
-  .flatMap((val) => val.split(',').map((o) => o.trim().replace(/\/+$/, '')))
-  .filter(Boolean);
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  next();
+});
 
-const allowedOrigins = Array.from(new Set([...defaultOrigins, ...envOrigins]));
-
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      if (!origin) return callback(null, true);
-      const cleanOrigin = origin.replace(/\/+$/, '');
-      if (allowedOrigins.includes(cleanOrigin) || allowedOrigins.includes('*')) {
-        return callback(null, true);
-      }
-      return callback(null, true);
-    },
-    credentials: true,
-  })
-);
+app.use(cors({
+  origin: true,
+  credentials: true
+}));
 app.use(express.json());
 
 // Initialize Database connection on startup
