@@ -341,6 +341,41 @@ app.post('/api/paystack/verify', async (req, res) => {
       return res.status(400).json({ error: 'Missing payment reference' });
     }
 
+    const paystackSecretKey = process.env.PAYSTACK_SECRET_KEY;
+
+    // Server-side verification with Paystack API if secret key is configured
+    if (paystackSecretKey && paystackSecretKey.trim() !== '') {
+      try {
+        const verifyRes = await fetch(
+          `https://api.paystack.co/transaction/verify/${encodeURIComponent(reference)}`,
+          {
+            method: 'GET',
+            headers: {
+              Authorization: `Bearer ${paystackSecretKey.trim()}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+
+        const verifyData = await verifyRes.json();
+
+        if (!verifyData.status || verifyData.data?.status !== 'success') {
+          console.error('[Paystack] Transaction verification failed:', verifyData);
+          return res.status(400).json({
+            error: 'Payment verification failed with Paystack API',
+            details: verifyData.message || 'Transaction was not successful',
+          });
+        }
+
+        console.log(`[Paystack] Successfully verified reference ${reference} via Paystack API.`);
+      } catch (verifyErr) {
+        console.error('[Paystack] API call error:', verifyErr.message);
+        return res.status(502).json({ error: 'Unable to reach Paystack verification servers' });
+      }
+    } else {
+      console.warn('[Paystack] PAYSTACK_SECRET_KEY is not set. Skipping server-side API verification.');
+    }
+
     // Mark database record as Paid
     const table = type === 'Summer Academy 2026' || type === 'summer' ? 'summer_registrations' : 'enrollments';
 
