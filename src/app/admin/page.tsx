@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import styles from './admin.module.css';
+import { API_BASE_URL } from '@/config/api';
 import {
   FaUsers,
   FaRocket,
@@ -48,7 +49,7 @@ export default function AdminDashboardPage() {
         setUsers(data.users || []);
       } else {
         // Fallback to Express backend directly
-        const expRes = await fetch('http://localhost:5000/api/admin/users', { cache: 'no-store' });
+        const expRes = await fetch(`${API_BASE_URL}/api/admin/users`, { cache: 'no-store' });
         if (expRes.ok) {
           const expData = await expRes.json();
           setUsers(expData.users || []);
@@ -58,7 +59,7 @@ export default function AdminDashboardPage() {
       }
     } catch (err: any) {
       console.error('Failed to fetch admin registered users:', err);
-      setError('Connection failed. Ensure backend server is running on port 5000.');
+      setError('Connection failed. Ensure backend server is running.');
     } finally {
       setLoading(false);
     }
@@ -73,8 +74,8 @@ export default function AdminDashboardPage() {
 
     try {
       const endpoint = user.type.includes('Summer')
-        ? `http://localhost:5000/api/admin/summer-registrations/${user.rawId}`
-        : `http://localhost:5000/api/admin/enrollments/${user.rawId}`;
+        ? `${API_BASE_URL}/api/admin/summer-registrations/${user.rawId}`
+        : `${API_BASE_URL}/api/admin/enrollments/${user.rawId}`;
 
       await fetch(endpoint, { method: 'DELETE' });
       setUsers((prev) => prev.filter((u) => u.id !== user.id));

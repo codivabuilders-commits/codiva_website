@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
+import { API_BASE_URL } from '@/config/api';
 
 export async function GET() {
   try {
     // Try to fetch from Express backend if active
     try {
-      const expressRes = await fetch('http://localhost:5000/api/admin/users', { cache: 'no-store' });
+      const expressRes = await fetch(`${API_BASE_URL}/api/admin/users`, { cache: 'no-store' });
       if (expressRes.ok) {
         const data = await expressRes.json();
         return NextResponse.json(data);

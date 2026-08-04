@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-
-const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:5000';
+import { API_BASE_URL } from '@/config/api';
 
 export async function POST(request: Request) {
   try {
@@ -25,7 +24,7 @@ export async function POST(request: Request) {
     }
 
     // Forward to Express backend which handles the DB write via pg pool
-    const backendRes = await fetch(`${BACKEND_URL}/api/summer-register`, {
+    const backendRes = await fetch(`${API_BASE_URL}/api/summer-register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import styles from './EnrollmentForm.module.css';
+import { API_BASE_URL } from '@/config/api';
 
 interface EnrollmentFormProps {
   isOpen: boolean;
@@ -28,7 +29,7 @@ export default function EnrollmentForm({ isOpen, onClose }: EnrollmentFormProps)
     setStatus('loading');
 
     try {
-      const response = await fetch('http://localhost:5000/api/enroll', {
+      const response = await fetch(`${API_BASE_URL}/api/enroll`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
