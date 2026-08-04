@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import styles from './admin.module.css';
 import { API_BASE_URL } from '@/config/api';
+import { getWhatsAppLink, DISPLAY_PHONE } from '@/config/contact';
 import {
   FaUsers,
   FaRocket,
@@ -14,19 +15,35 @@ import {
   FaTrash,
   FaArrowLeft,
   FaEnvelope,
+  FaCheckCircle,
+  FaDownload,
+  FaChild,
 } from 'react-icons/fa';
+
+export interface ChildInfo {
+  name: string;
+  age: string | number;
+  course: string;
+  schedule: string;
+}
 
 export interface RegisteredUser {
   id: string;
   rawId: number;
-  type: string; // 'Summer Academy 2026' or 'General Program'
+  type: string;
   parentName: string;
   childName: string;
   childAge: number | string;
+  children: ChildInfo[];
   program: string;
   phone: string;
   email: string;
   campus: string;
+  amount: number;
+  discountAmount: number;
+  paymentStatus: string;
+  paymentMethod: string;
+  paymentReference: string;
   agreeUpdates: boolean;
   createdAt: string;
 }
@@ -35,19 +52,18 @@ export default function AdminDashboardPage() {
   const [users, setUsers] = useState<RegisteredUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [activeTab, setActiveTab] = useState<'all' | 'summer' | 'general'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'summer' | 'general' | 'paid' | 'pending'>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   const fetchUsers = async () => {
     setLoading(true);
     setError('');
     try {
-      // Try configured API_BASE_URL backend first
       let res;
       try {
         res = await fetch(`${API_BASE_URL}/api/admin/users`, { cache: 'no-store' });
       } catch (err) {
-        // Fallback to Next.js API route proxy if direct fetch fails
         res = await fetch('/api/admin/users', { cache: 'no-store' });
       }
 
@@ -69,8 +85,31 @@ export default function AdminDashboardPage() {
     fetchUsers();
   }, []);
 
+  const handleMarkAsPaid = async (user: RegisteredUser) => {
+    if (!confirm(`Mark ${user.childName || user.parentName}'s registration as Paid?`)) return;
+    setUpdatingId(user.id);
+
+    try {
+      const tableType = user.type.includes('Summer') ? 'summer' : 'general';
+      await fetch(`${API_BASE_URL}/api/admin/registrations/${tableType}/${user.rawId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ paymentStatus: 'Paid' }),
+      });
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.id === user.id ? { ...u, paymentStatus: 'Paid', paymentMethod: 'Bank Transfer (Confirmed)' } : u
+        )
+      );
+    } catch (err) {
+      alert('Failed to update status. Please try again.');
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
   const handleDelete = async (user: RegisteredUser) => {
-    if (!confirm(`Are you sure you want to delete registration for ${user.childName}?`)) return;
+    if (!confirm(`Delete registration for ${user.childName || user.parentName}?`)) return;
 
     try {
       const endpoint = user.type.includes('Summer')
@@ -84,12 +123,44 @@ export default function AdminDashboardPage() {
     }
   };
 
-  // Filter users based on active tab & search query
+  const handleExportCSV = () => {
+    const headers = ['Type', 'Parent Name', 'Email', 'Phone', 'Children & Programs', 'Amount (₦)', 'Discount (₦)', 'Payment Status', 'Payment Method', 'Reference', 'Date Registered'];
+    const rows = filteredUsers.map((u) => [
+      u.type,
+      u.parentName,
+      u.email,
+      u.phone,
+      u.children && u.children.length > 0
+        ? u.children.map((c: ChildInfo) => `${c.name} (Age ${c.age}, ${c.course})`).join(' | ')
+        : u.childName,
+      u.amount || 0,
+      u.discountAmount || 0,
+      u.paymentStatus,
+      u.paymentMethod,
+      u.paymentReference,
+      u.createdAt ? new Date(u.createdAt).toLocaleDateString() : 'N/A',
+    ]);
+
+    const csvContent = [headers, ...rows]
+      .map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `codiva_registrations_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const filteredUsers = users.filter((u) => {
     const matchesTab =
       activeTab === 'all' ||
       (activeTab === 'summer' && u.type.includes('Summer')) ||
-      (activeTab === 'general' && u.type.includes('General'));
+      (activeTab === 'general' && u.type.includes('General')) ||
+      (activeTab === 'paid' && u.paymentStatus === 'Paid') ||
+      (activeTab === 'pending' && u.paymentStatus === 'Pending Payment');
 
     const query = searchQuery.toLowerCase().trim();
     const matchesSearch =
@@ -105,7 +176,11 @@ export default function AdminDashboardPage() {
 
   const summerCount = users.filter((u) => u.type.includes('Summer')).length;
   const generalCount = users.filter((u) => u.type.includes('General')).length;
-  const estimatedRevenue = summerCount * 50000;
+  const paidCount = users.filter((u) => u.paymentStatus === 'Paid').length;
+  const pendingCount = users.filter((u) => u.paymentStatus === 'Pending Payment').length;
+  const totalPaidRevenue = users.filter((u) => u.paymentStatus === 'Paid').reduce((sum, u) => sum + (u.amount || 0), 0);
+  const totalPendingRevenue = users.filter((u) => u.paymentStatus !== 'Paid').reduce((sum, u) => sum + (u.amount || 0), 0);
+  const totalChildren = users.reduce((sum, u) => sum + (u.children?.length || 1), 0);
 
   return (
     <div className={styles.adminWrapper}>
@@ -123,6 +198,9 @@ export default function AdminDashboardPage() {
         </div>
 
         <div className={styles.headerActions}>
+          <button onClick={handleExportCSV} className={styles.btnExport} title="Export participant list as CSV">
+            <FaDownload /> Export CSV
+          </button>
           <button onClick={fetchUsers} className={styles.btnRefresh} disabled={loading}>
             <FaSync className={loading ? 'animate-spin' : ''} />
             {loading ? 'Refreshing...' : 'Refresh Data'}
@@ -131,9 +209,9 @@ export default function AdminDashboardPage() {
       </header>
 
       <div className={styles.container}>
-        <h1 className={styles.pageTitle}>Registered Students & Academy Admissions</h1>
+        <h1 className={styles.pageTitle}>Registrations & Enrollment Dashboard</h1>
         <p className={styles.pageSubtitle}>
-          Real-time database records for <strong>Summer Innovation Academy 2026</strong> and General Programs.
+          Real-time records for <strong>Summer Innovation Academy 2026</strong> and all General Programs.
         </p>
 
         {/* Stats Summary */}
@@ -141,7 +219,7 @@ export default function AdminDashboardPage() {
           <div className={styles.statCard}>
             <div>
               <div className={styles.statValue}>{users.length}</div>
-              <div className={styles.statLabel}>Total Registered Students</div>
+              <div className={styles.statLabel}>Total Registrations</div>
             </div>
             <div className={styles.statIcon} style={{ background: '#eff6ff', color: '#0A66C2' }}>
               <FaUsers />
@@ -150,28 +228,28 @@ export default function AdminDashboardPage() {
 
           <div className={styles.statCard}>
             <div>
-              <div className={styles.statValue}>{summerCount}</div>
-              <div className={styles.statLabel}>Summer 2026 Cohort</div>
+              <div className={styles.statValue}>{totalChildren}</div>
+              <div className={styles.statLabel}>Total Children Enrolled</div>
             </div>
             <div className={styles.statIcon} style={{ background: '#fff7ed', color: '#FF6B00' }}>
-              <FaRocket />
+              <FaChild />
             </div>
           </div>
 
           <div className={styles.statCard}>
             <div>
-              <div className={styles.statValue}>{generalCount}</div>
-              <div className={styles.statLabel}>General Enrollments</div>
+              <div className={styles.statValue}>₦{totalPaidRevenue.toLocaleString()}</div>
+              <div className={styles.statLabel}>Confirmed Revenue (Paid)</div>
             </div>
             <div className={styles.statIcon} style={{ background: '#f0fdf4', color: '#10b981' }}>
-              <FaLaptopCode />
+              <FaMoneyBillWave />
             </div>
           </div>
 
           <div className={styles.statCard}>
             <div>
-              <div className={styles.statValue}>₦{estimatedRevenue.toLocaleString()}</div>
-              <div className={styles.statLabel}>Summer Pipeline Revenue</div>
+              <div className={styles.statValue}>₦{totalPendingRevenue.toLocaleString()}</div>
+              <div className={styles.statLabel}>Pending Revenue (Unpaid)</div>
             </div>
             <div className={styles.statIcon} style={{ background: '#fef3c7', color: '#d97706' }}>
               <FaMoneyBillWave />
@@ -182,23 +260,20 @@ export default function AdminDashboardPage() {
         {/* Filter Controls Bar */}
         <div className={styles.controlsBar}>
           <div className={styles.tabGroup}>
-            <button
-              onClick={() => setActiveTab('all')}
-              className={`${styles.tabBtn} ${activeTab === 'all' ? styles.tabBtnActive : ''}`}
-            >
+            <button onClick={() => setActiveTab('all')} className={`${styles.tabBtn} ${activeTab === 'all' ? styles.tabBtnActive : ''}`}>
               All ({users.length})
             </button>
-            <button
-              onClick={() => setActiveTab('summer')}
-              className={`${styles.tabBtn} ${activeTab === 'summer' ? styles.tabBtnActive : ''}`}
-            >
-              Summer Academy 2026 ({summerCount})
+            <button onClick={() => setActiveTab('summer')} className={`${styles.tabBtn} ${activeTab === 'summer' ? styles.tabBtnActive : ''}`}>
+              Summer ({summerCount})
             </button>
-            <button
-              onClick={() => setActiveTab('general')}
-              className={`${styles.tabBtn} ${activeTab === 'general' ? styles.tabBtnActive : ''}`}
-            >
-              General Programs ({generalCount})
+            <button onClick={() => setActiveTab('general')} className={`${styles.tabBtn} ${activeTab === 'general' ? styles.tabBtnActive : ''}`}>
+              General ({generalCount})
+            </button>
+            <button onClick={() => setActiveTab('paid')} className={`${styles.tabBtn} ${activeTab === 'paid' ? styles.tabBtnActive : ''}`}>
+              Paid ✓ ({paidCount})
+            </button>
+            <button onClick={() => setActiveTab('pending')} className={`${styles.tabBtn} ${activeTab === 'pending' ? styles.tabBtnActive : ''}`}>
+              Pending ({pendingCount})
             </button>
           </div>
 
@@ -219,7 +294,7 @@ export default function AdminDashboardPage() {
           {loading ? (
             <div className={styles.emptyState}>
               <div className={styles.emptyIcon}>⏳</div>
-              <p>Fetching registrations from database pool...</p>
+              <p>Fetching registrations from database...</p>
             </div>
           ) : error ? (
             <div className={styles.emptyState} style={{ color: '#ef4444' }}>
@@ -237,44 +312,44 @@ export default function AdminDashboardPage() {
               <thead>
                 <tr>
                   <th className={styles.th}>Type</th>
-                  <th className={styles.th}>Child Name & Age</th>
-                  <th className={styles.th}>Assigned Track / Course</th>
                   <th className={styles.th}>Parent / Guardian</th>
-                  <th className={styles.th}>WhatsApp Contact</th>
+                  <th className={styles.th}>Children & Programs</th>
+                  <th className={styles.th}>WhatsApp</th>
                   <th className={styles.th}>Email</th>
-                  <th className={styles.th}>Campus</th>
-                  <th className={styles.th}>Registered At</th>
-                  <th className={styles.th}>Action</th>
+                  <th className={styles.th}>Amount</th>
+                  <th className={styles.th}>Payment Status</th>
+                  <th className={styles.th}>Date</th>
+                  <th className={styles.th}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredUsers.map((u) => {
                   const cleanPhone = u.phone ? u.phone.replace(/[^0-9]/g, '') : '';
-                  const waUrl = cleanPhone ? `https://wa.me/${cleanPhone}` : '#';
+                  const waUrl = cleanPhone ? getWhatsAppLink(`Hello ${u.parentName}, this is Codiva Builders regarding your child's enrollment.`) : '#';
+                  const childrenList: ChildInfo[] = u.children && u.children.length > 0
+                    ? u.children
+                    : [{ name: u.childName, age: u.childAge, course: u.program, schedule: u.campus }];
 
                   return (
                     <tr key={u.id} className={styles.tr}>
                       <td className={styles.td}>
-                        <span
-                          className={`${styles.badgeType} ${
-                            u.type.includes('Summer') ? styles.badgeSummer : styles.badgeGeneral
-                          }`}
-                        >
+                        <span className={`${styles.badgeType} ${u.type.includes('Summer') ? styles.badgeSummer : styles.badgeGeneral}`}>
                           {u.type}
                         </span>
                       </td>
 
                       <td className={styles.td}>
-                        <strong style={{ color: '#0f172a' }}>{u.childName}</strong>
-                        <div style={{ fontSize: '0.8rem', color: '#64748b' }}>Age: {u.childAge}</div>
+                        <strong style={{ color: '#0f172a' }}>{u.parentName}</strong>
                       </td>
 
                       <td className={styles.td}>
-                        <span style={{ fontWeight: 700, color: '#0A66C2' }}>{u.program}</span>
-                      </td>
-
-                      <td className={styles.td}>
-                        <strong>{u.parentName}</strong>
+                        <div style={{ maxWidth: '220px' }}>
+                          {childrenList.map((c: ChildInfo, ci: number) => (
+                            <div key={ci} style={{ fontSize: '0.82rem', marginBottom: '0.2rem', color: '#334155' }}>
+                              • <strong>{c.name}</strong> (Age {c.age}) — <span style={{ color: '#0A66C2' }}>{c.course}</span>
+                            </div>
+                          ))}
+                        </div>
                       </td>
 
                       <td className={styles.td}>
@@ -283,19 +358,31 @@ export default function AdminDashboardPage() {
                             <FaWhatsapp /> {u.phone}
                           </a>
                         ) : (
-                          <span>{u.phone || 'N/A'}</span>
+                          <span style={{ color: '#94a3b8' }}>N/A</span>
                         )}
                       </td>
 
                       <td className={styles.td}>
-                        <span style={{ fontSize: '0.85rem' }}>
+                        <span style={{ fontSize: '0.82rem', color: '#475569' }}>
                           <FaEnvelope style={{ color: '#94a3b8', marginRight: '0.25rem' }} />
                           {u.email}
                         </span>
                       </td>
 
                       <td className={styles.td}>
-                        <span style={{ fontSize: '0.85rem', color: '#475569' }}>{u.campus}</span>
+                        <div style={{ fontWeight: 700, color: '#0f172a' }}>₦{(u.amount || 0).toLocaleString()}</div>
+                        {u.discountAmount > 0 && (
+                          <div style={{ fontSize: '0.75rem', color: '#16a34a' }}>-₦{u.discountAmount.toLocaleString()} saved</div>
+                        )}
+                      </td>
+
+                      <td className={styles.td}>
+                        <span className={u.paymentStatus === 'Paid' ? styles.statusPaid : styles.statusPending}>
+                          {u.paymentStatus === 'Paid' ? 'Paid ✓' : 'Pending Payment'}
+                        </span>
+                        {u.paymentMethod && (
+                          <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: '0.2rem' }}>{u.paymentMethod}</div>
+                        )}
                       </td>
 
                       <td className={styles.td} style={{ fontSize: '0.8rem', color: '#64748b', whiteSpace: 'nowrap' }}>
@@ -303,13 +390,25 @@ export default function AdminDashboardPage() {
                       </td>
 
                       <td className={styles.td}>
-                        <button
-                          onClick={() => handleDelete(u)}
-                          className={styles.btnDelete}
-                          title="Delete Registration"
-                        >
-                          <FaTrash />
-                        </button>
+                        <div className={styles.actionCell}>
+                          {u.paymentStatus !== 'Paid' && (
+                            <button
+                              onClick={() => handleMarkAsPaid(u)}
+                              disabled={updatingId === u.id}
+                              className={styles.btnMarkPaid}
+                              title="Mark as Paid"
+                            >
+                              <FaCheckCircle /> {updatingId === u.id ? '...' : 'Mark Paid'}
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleDelete(u)}
+                            className={styles.btnDelete}
+                            title="Delete Registration"
+                          >
+                            <FaTrash />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -317,6 +416,11 @@ export default function AdminDashboardPage() {
               </tbody>
             </table>
           )}
+        </div>
+
+        {/* Contact info footer */}
+        <div style={{ textAlign: 'center', marginTop: '2rem', fontSize: '0.85rem', color: '#94a3b8' }}>
+          Admin contact: {DISPLAY_PHONE} | hello@codivabuilders.com
         </div>
       </div>
     </div>

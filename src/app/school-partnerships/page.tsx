@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import styles from '../program-shared.module.css';
+import { getWhatsAppLink } from '@/config/contact';
 import {
   FaBuilding,
   FaCode,
@@ -64,7 +65,7 @@ export default function SchoolPartnershipsPage() {
           </div>
           <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
             <a
-              href="https://wa.me/2348000000000?text=Hello!%20I'm%20interested%20in%20partnering%20with%20Codiva%20Builders%20for%20our%20school."
+              href={getWhatsAppLink("Hello! I'm interested in partnering with Codiva Builders for our school.")}
               className="btn btn-orange"
               style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
             >
@@ -181,7 +182,7 @@ export default function SchoolPartnershipsPage() {
           <p className={styles.ctaSubtitle}>Let&apos;s bring world-class technology education into your school. Contact us today to get started.</p>
           <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
             <a
-              href="https://wa.me/2348000000000?text=Hello!%20I'm%20interested%20in%20the%20School%20Partnership%20Program."
+              href={getWhatsAppLink("Hello! I'm interested in the School Partnership Program.")}
               className="btn"
               style={{ background: 'white', color: 'var(--secondary-orange)', fontWeight: '700', display: 'inline-flex', gap: '0.5rem', alignItems: 'center' }}
             >

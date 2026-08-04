@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import styles from '../program-shared.module.css';
+import { getWhatsAppLink } from '@/config/contact';
 import {
   FaBolt,
   FaCode,
@@ -74,7 +75,7 @@ export default function BuilderPlusPage() {
           </div>
           <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
             <a
-              href="https://wa.me/2348000000000?text=Hello!%20I'm%20interested%20in%20Builder%20Plus."
+              href={getWhatsAppLink("Hello! I'm interested in Builder Plus.")}
               className="btn btn-orange"
               style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
             >
@@ -148,7 +149,7 @@ export default function BuilderPlusPage() {
                 ))}
               </ul>
               <a
-                href="https://wa.me/2348000000000?text=Hello!%20I'd%20like%20to%20enroll%20in%20Builder%20Plus."
+                href={getWhatsAppLink("Hello! I'd like to enroll in Builder Plus.")}
                 className="btn btn-orange"
                 style={{ width: '100%', display: 'flex', justifyContent: 'center', gap: '0.5rem' }}
               >
@@ -181,7 +182,7 @@ export default function BuilderPlusPage() {
           <h2 className={styles.ctaTitle}>Take Your Child to the Next Level</h2>
           <p className={styles.ctaSubtitle}>Builder Plus is for students who are ready to go further. Enroll today and unlock their full potential.</p>
           <a
-            href="https://wa.me/2348000000000?text=Hello!%20I'd%20like%20to%20enroll%20my%20child%20in%20Builder%20Plus."
+            href={getWhatsAppLink("Hello! I'd like to enroll my child in Builder Plus.")}
             className="btn"
             style={{ background: 'white', color: 'var(--secondary-orange)', fontWeight: '700', display: 'inline-flex', gap: '0.5rem', alignItems: 'center' }}
           >

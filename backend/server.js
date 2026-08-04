@@ -51,14 +51,41 @@ if (supabaseUrl && supabaseKey) {
 
 // Healthcheck Route
 app.get('/', (req, res) => {
-  res.json({ message: 'Codiva Builders API is running...', status: 'online' });
+  res.json({ 
+    message: 'Codiva Builders API is running...', 
+    status: 'online',
+    whatsappNumber: process.env.WHATSAPP_NUMBER || '2348105281572'
+  });
 });
+
+// Helper for multi-children processing & discount engine
+function calculateMultiChildDiscount(childrenList = [], basePricePerChild = 40000) {
+  const childCount = childrenList.length || 1;
+  const rawSubtotal = childCount * basePricePerChild;
+  
+  // 20% discount on each child if 2 or more children
+  let discountPercentage = 0;
+  if (childCount >= 2) {
+    discountPercentage = 0.20;
+  }
+  
+  const discountAmount = rawSubtotal * discountPercentage;
+  const finalTotal = rawSubtotal - discountAmount;
+
+  return {
+    childCount,
+    rawSubtotal,
+    discountAmount,
+    discountPercentage,
+    finalTotal
+  };
+}
 
 // ==========================================
 // PUBLIC ENROLLMENT ENDPOINTS
 // ==========================================
 
-// General Program Enrollment Endpoint
+// General Program Enrollment Endpoint (Supports Multi-children & Paystack)
 app.post('/api/enroll', async (req, res) => {
   const origin = req.headers.origin;
   if (origin) res.setHeader('Access-Control-Allow-Origin', origin);
@@ -66,34 +93,67 @@ app.post('/api/enroll', async (req, res) => {
 
   try {
     const { 
-      childName, 
-      childAge, 
       parentName, 
       parentEmail, 
       parentPhone, 
+      children, // Array of { name, age, course, schedule }
+      childName, // Fallback single child
+      childAge, 
       course, 
-      learningMode 
+      learningMode,
+      paymentMethod, // 'Paystack' | 'Pay Later'
+      paymentStatus, // 'Paid' | 'Pending Payment'
+      paymentReference,
+      basePricePerChild
     } = req.body || {};
 
-    if (!childName || !parentEmail || !course) {
-      return res.status(400).json({ error: 'Missing required fields' });
+    if (!parentName || !parentEmail || !parentPhone) {
+      return res.status(400).json({ error: 'Parent Name, Email, and Phone number are required' });
     }
+
+    // Build standardized children list
+    let childrenList = Array.isArray(children) && children.length > 0 ? children : [];
+    if (childrenList.length === 0 && childName) {
+      childrenList.push({
+        name: childName,
+        age: parseInt(childAge || '0', 10),
+        course: course || 'General Program',
+        schedule: learningMode || 'Online'
+      });
+    }
+
+    if (childrenList.length === 0) {
+      return res.status(400).json({ error: 'At least one child details must be provided' });
+    }
+
+    const firstChild = childrenList[0];
+    const pricing = calculateMultiChildDiscount(childrenList, basePricePerChild || 40000);
+    const status = paymentStatus || (paymentMethod === 'Paystack' ? 'Paid' : 'Pending Payment');
+    const method = paymentMethod || 'Pay Later';
+    const ref = paymentReference || `ENR_${Date.now()}`;
 
     let savedData = null;
 
     try {
       const result = await pool.query(
-        `INSERT INTO enrollments (child_name, child_age, parent_name, parent_email, parent_phone, course, learning_mode)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)
+        `INSERT INTO enrollments 
+         (parent_name, parent_email, parent_phone, child_name, child_age, course, learning_mode, children_json, amount, discount_amount, payment_status, payment_method, payment_reference)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
          RETURNING *`,
         [
-          childName, 
-          parseInt(childAge || '0', 10), 
-          parentName || '', 
-          parentEmail, 
-          parentPhone || '', 
-          course, 
-          learningMode || 'Online'
+          parentName,
+          parentEmail,
+          parentPhone,
+          firstChild.name || '',
+          parseInt(firstChild.age || '0', 10),
+          firstChild.course || 'General Course',
+          firstChild.schedule || learningMode || 'Online',
+          JSON.stringify(childrenList),
+          pricing.finalTotal,
+          pricing.discountAmount,
+          status,
+          method,
+          ref
         ]
       );
       savedData = result.rows[0];
@@ -105,13 +165,19 @@ app.post('/api/enroll', async (req, res) => {
       try {
         const { data: sbData } = await supabase.from('enrollments').insert([
           { 
-            child_name: childName, 
-            child_age: parseInt(childAge || '0', 10), 
             parent_name: parentName, 
             parent_email: parentEmail, 
             parent_phone: parentPhone, 
-            course: course, 
-            learning_mode: learningMode,
+            child_name: firstChild.name || '', 
+            child_age: parseInt(firstChild.age || '0', 10), 
+            course: firstChild.course || 'General Course', 
+            learning_mode: firstChild.schedule || learningMode || 'Online',
+            children_json: childrenList,
+            amount: pricing.finalTotal,
+            discount_amount: pricing.discountAmount,
+            payment_status: status,
+            payment_method: method,
+            payment_reference: ref,
             created_at: new Date()
           }
         ]).select();
@@ -122,19 +188,25 @@ app.post('/api/enroll', async (req, res) => {
     }
 
     return res.status(201).json({ 
-      message: 'Enrollment successful', 
-      data: savedData || { childName, parentEmail, course } 
+      message: 'Enrollment registered successfully', 
+      pricing,
+      data: savedData || { 
+        id: Date.now(),
+        parentName, 
+        parentEmail, 
+        childrenList,
+        amount: pricing.finalTotal,
+        paymentStatus: status,
+        paymentReference: ref
+      } 
     });
   } catch (error) {
     console.error('Error saving enrollment:', error.message);
-    return res.status(200).json({ 
-      message: 'Enrollment received', 
-      warning: error.message 
-    });
+    return res.status(500).json({ error: error.message });
   }
 });
 
-// Summer Academy Registration Endpoint
+// Summer Academy Registration Endpoint (Multi-children + Discount + Payment)
 app.post('/api/summer-register', async (req, res) => {
   const origin = req.headers.origin;
   if (origin) res.setHeader('Access-Control-Allow-Origin', origin);
@@ -143,56 +215,92 @@ app.post('/api/summer-register', async (req, res) => {
   try {
     const { 
       parentName, 
+      parentPhone, 
+      parentEmail, 
+      children,
       childName, 
       childAge, 
       assignedTrack, 
-      parentPhone, 
-      parentEmail, 
       preferredCampus,
-      agreeUpdates
+      agreeUpdates,
+      paymentMethod,
+      paymentStatus,
+      paymentReference,
+      basePricePerChild
     } = req.body || {};
 
-    if (!parentName || !childName || !parentEmail || !parentPhone) {
-      return res.status(400).json({ error: 'Missing required registration fields' });
+    if (!parentName || !parentEmail || !parentPhone) {
+      return res.status(400).json({ error: 'Parent Name, Email, and Phone number are required' });
     }
+
+    let childrenList = Array.isArray(children) && children.length > 0 ? children : [];
+    if (childrenList.length === 0 && childName) {
+      childrenList.push({
+        name: childName,
+        age: parseInt(childAge || '0', 10),
+        course: assignedTrack || 'Summer Track',
+        schedule: preferredCampus || 'Online / Virtual Campus'
+      });
+    }
+
+    if (childrenList.length === 0) {
+      return res.status(400).json({ error: 'At least one child details must be provided' });
+    }
+
+    const firstChild = childrenList[0];
+    const pricing = calculateMultiChildDiscount(childrenList, basePricePerChild || 50000);
+    const status = paymentStatus || (paymentMethod === 'Paystack' ? 'Paid' : 'Pending Payment');
+    const method = paymentMethod || 'Pay Later';
+    const ref = paymentReference || `SMR_${Date.now()}`;
 
     let savedData = null;
 
-    // 1. Try PostgreSQL pool
     try {
       const result = await pool.query(
-        `INSERT INTO summer_registrations (parent_name, child_name, child_age, assigned_track, parent_phone, parent_email, preferred_campus, agree_updates)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        `INSERT INTO summer_registrations 
+         (parent_name, child_name, child_age, assigned_track, parent_phone, parent_email, preferred_campus, agree_updates, children_json, amount, discount_amount, payment_status, payment_method, payment_reference)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
          RETURNING *`,
         [
           parentName,
-          childName,
-          parseInt(childAge || '0', 10),
-          assignedTrack || 'Summer Track',
+          firstChild.name || '',
+          parseInt(firstChild.age || '0', 10),
+          firstChild.course || assignedTrack || 'Summer Track',
           parentPhone,
           parentEmail,
           preferredCampus || 'Online / Virtual Campus',
-          agreeUpdates !== false
+          agreeUpdates !== false,
+          JSON.stringify(childrenList),
+          pricing.finalTotal,
+          pricing.discountAmount,
+          status,
+          method,
+          ref
         ]
       );
       savedData = result.rows[0];
     } catch (pgErr) {
-      console.warn('[DB] PostgreSQL summer_registration insert note:', pgErr.message);
+      console.error('[DB] PostgreSQL summer_registration insert FAILED:', pgErr.message, pgErr.detail || '');
     }
 
-    // 2. Try Supabase fallback
     if (!savedData && supabase) {
       try {
         const { data: sbData } = await supabase.from('summer_registrations').insert([
           { 
             parent_name: parentName, 
-            child_name: childName, 
-            child_age: parseInt(childAge || '0', 10), 
-            assigned_track: assignedTrack || 'Summer Track',
+            child_name: firstChild.name || '', 
+            child_age: parseInt(firstChild.age || '0', 10), 
+            assigned_track: firstChild.course || assignedTrack || 'Summer Track',
             parent_phone: parentPhone, 
             parent_email: parentEmail, 
             preferred_campus: preferredCampus || 'Online / Virtual Campus',
             agree_updates: agreeUpdates !== false,
+            children_json: childrenList,
+            amount: pricing.finalTotal,
+            discount_amount: pricing.discountAmount,
+            payment_status: status,
+            payment_method: method,
+            payment_reference: ref,
             created_at: new Date()
           }
         ]).select();
@@ -206,20 +314,73 @@ app.post('/api/summer-register', async (req, res) => {
     }
 
     return res.status(201).json({ 
-      message: 'Summer registration received successfully', 
-      data: savedData || { parentName, childName, assignedTrack } 
+      message: 'Summer registration saved successfully', 
+      pricing,
+      data: savedData || { 
+        id: Date.now(),
+        parentName, 
+        parentEmail, 
+        childrenList,
+        amount: pricing.finalTotal,
+        paymentStatus: status,
+        paymentReference: ref
+      } 
     });
   } catch (error) {
     console.error('Error saving summer registration:', error.message);
-    return res.status(200).json({ 
-      message: 'Summer registration received', 
-      warning: error.message 
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+// Paystack Verification & Payment Update Endpoint
+app.post('/api/paystack/verify', async (req, res) => {
+  try {
+    const { reference, registrationId, type } = req.body || {};
+
+    if (!reference) {
+      return res.status(400).json({ error: 'Missing payment reference' });
+    }
+
+    // Mark database record as Paid
+    const table = type === 'Summer Academy 2026' || type === 'summer' ? 'summer_registrations' : 'enrollments';
+
+    if (registrationId) {
+      try {
+        await pool.query(
+          `UPDATE ${table} SET payment_status = 'Paid', payment_method = 'Paystack', payment_reference = $1 WHERE id = $2`,
+          [reference, registrationId]
+        );
+      } catch (pgErr) {
+        console.warn('[DB] Could not update payment status in postgres pool:', pgErr.message);
+      }
+
+      if (supabase) {
+        try {
+          await supabase.from(table).update({
+            payment_status: 'Paid',
+            payment_method: 'Paystack',
+            payment_reference: reference
+          }).eq('id', registrationId);
+        } catch (sbErr) {
+          console.warn('[DB] Supabase update note:', sbErr.message);
+        }
+      }
+    }
+
+    return res.json({
+      success: true,
+      message: 'Payment verified and status updated to Paid',
+      reference,
+      status: 'Paid'
     });
+  } catch (error) {
+    console.error('Paystack verification error:', error.message);
+    return res.status(500).json({ error: error.message });
   }
 });
 
 // ==========================================
-// ADMIN ENDPOINTS (To view registered users)
+// ADMIN ENDPOINTS (To view & manage registered users)
 // ==========================================
 
 // Get All Registrations (Combined Summer + General)
@@ -256,43 +417,97 @@ app.get('/api/admin/users', async (req, res) => {
       }
     }
 
-    const summerUsers = summerRows.map(r => ({
-      id: `summer-${r.id}`,
-      rawId: r.id,
-      type: 'Summer Academy 2026',
-      parentName: r.parent_name || r.parentName || '',
-      childName: r.child_name || r.childName || '',
-      childAge: r.child_age || r.childAge || '',
-      program: r.assigned_track || r.assignedTrack || 'Summer Track',
-      phone: r.parent_phone || r.parentPhone || '',
-      email: r.parent_email || r.parentEmail || '',
-      campus: r.preferred_campus || r.preferredCampus || 'Online / Virtual Campus',
-      agreeUpdates: r.agree_updates !== false,
-      createdAt: r.created_at || new Date().toISOString()
-    }));
+    const parseChildren = (row) => {
+      if (row.children_json) {
+        try {
+          const parsed = typeof row.children_json === 'string' ? JSON.parse(row.children_json) : row.children_json;
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        } catch (e) {}
+      }
+      // Single child fallback
+      return [{
+        name: row.child_name || row.childName || 'Child',
+        age: row.child_age || row.childAge || '',
+        course: row.assigned_track || row.course || 'General Track',
+        schedule: row.preferred_campus || row.learning_mode || 'Online'
+      }];
+    };
 
-    const generalUsers = generalRows.map(r => ({
-      id: `general-${r.id}`,
-      rawId: r.id,
-      type: 'General Program',
-      parentName: r.parent_name || r.parentName || '',
-      childName: r.child_name || r.childName || '',
-      childAge: r.child_age || r.childAge || '',
-      program: r.course || 'General Course',
-      phone: r.parent_phone || r.parentPhone || '',
-      email: r.parent_email || r.parentEmail || '',
-      campus: r.learning_mode || r.learningMode || 'Online',
-      agreeUpdates: true,
-      createdAt: r.created_at || new Date().toISOString()
-    }));
+    const summerUsers = summerRows.map(r => {
+      const children = parseChildren(r);
+      const amount = Number(r.amount) || (children.length >= 2 ? children.length * 40000 : 50000 * children.length);
+      return {
+        id: `summer-${r.id}`,
+        rawId: r.id,
+        type: 'Summer Academy 2026',
+        parentName: r.parent_name || r.parentName || '',
+        childName: children.map(c => c.name).join(', '),
+        childAge: children.map(c => c.age).join(', '),
+        children,
+        program: children.map(c => c.course).join(' | '),
+        phone: r.parent_phone || r.parentPhone || '',
+        email: r.parent_email || r.parentEmail || '',
+        campus: r.preferred_campus || r.preferredCampus || 'Online / Virtual Campus',
+        amount,
+        discountAmount: Number(r.discount_amount) || 0,
+        paymentStatus: r.payment_status || 'Pending Payment',
+        paymentMethod: r.payment_method || 'Pay Later',
+        paymentReference: r.payment_reference || '',
+        agreeUpdates: r.agree_updates !== false,
+        createdAt: r.created_at || new Date().toISOString()
+      };
+    });
+
+    const generalUsers = generalRows.map(r => {
+      const children = parseChildren(r);
+      const amount = Number(r.amount) || (children.length >= 2 ? children.length * 32000 : 40000 * children.length);
+      return {
+        id: `general-${r.id}`,
+        rawId: r.id,
+        type: 'General Program',
+        parentName: r.parent_name || r.parentName || '',
+        childName: children.map(c => c.name).join(', '),
+        childAge: children.map(c => c.age).join(', '),
+        children,
+        program: children.map(c => c.course).join(' | '),
+        phone: r.parent_phone || r.parentPhone || '',
+        email: r.parent_email || r.parentEmail || '',
+        campus: r.learning_mode || r.learningMode || 'Online',
+        amount,
+        discountAmount: Number(r.discount_amount) || 0,
+        paymentStatus: r.payment_status || 'Pending Payment',
+        paymentMethod: r.payment_method || 'Pay Later',
+        paymentReference: r.payment_reference || '',
+        agreeUpdates: true,
+        createdAt: r.created_at || new Date().toISOString()
+      };
+    });
 
     const allUsers = [...summerUsers, ...generalUsers].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
+    let totalPaidRevenue = 0;
+    let totalPendingRevenue = 0;
+    let totalChildrenCount = 0;
+
+    allUsers.forEach(u => {
+      totalChildrenCount += u.children ? u.children.length : 1;
+      if (u.paymentStatus === 'Paid') {
+        totalPaidRevenue += u.amount;
+      } else {
+        totalPendingRevenue += u.amount;
+      }
+    });
+
     return res.json({
       stats: {
-        total: allUsers.length,
+        totalRegistrations: allUsers.length,
+        totalChildrenCount,
+        totalPaidRevenue,
+        totalPendingRevenue,
         summerCount: summerUsers.length,
         generalCount: generalUsers.length,
+        paidCount: allUsers.filter(u => u.paymentStatus === 'Paid').length,
+        pendingCount: allUsers.filter(u => u.paymentStatus === 'Pending Payment').length,
       },
       users: allUsers,
       summerRegistrations: summerUsers,
@@ -301,32 +516,39 @@ app.get('/api/admin/users', async (req, res) => {
   } catch (error) {
     console.error('Admin API error:', error.message);
     return res.json({
-      stats: { total: 0, summerCount: 0, generalCount: 0 },
+      stats: { totalRegistrations: 0, totalChildrenCount: 0, totalPaidRevenue: 0, totalPendingRevenue: 0 },
       users: [],
-      summerRegistrations: [],
-      generalEnrollments: [],
       warning: error.message
     });
   }
 });
 
-// Get Summer Registrations Only
-app.get('/api/admin/summer-registrations', async (req, res) => {
+// Update Registration Payment Status (e.g. Mark Pending as Paid)
+app.patch('/api/admin/registrations/:type/:id/status', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM summer_registrations ORDER BY created_at DESC');
-    res.json({ count: result.rows.length, data: result.rows });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
+    const { type, id } = req.params;
+    const { paymentStatus } = req.body || {};
 
-// Get General Enrollments Only
-app.get('/api/admin/enrollments', async (req, res) => {
-  try {
-    const result = await pool.query('SELECT * FROM enrollments ORDER BY created_at DESC');
-    res.json({ count: result.rows.length, data: result.rows });
+    const newStatus = paymentStatus || 'Paid';
+    const table = type === 'summer' ? 'summer_registrations' : 'enrollments';
+
+    try {
+      await pool.query(`UPDATE ${table} SET payment_status = $1 WHERE id = $2`, [newStatus, id]);
+    } catch (pgErr) {
+      console.warn('[DB] PostgreSQL status update note:', pgErr.message);
+    }
+
+    if (supabase) {
+      try {
+        await supabase.from(table).update({ payment_status: newStatus }).eq('id', id);
+      } catch (sbErr) {
+        console.warn('[DB] Supabase status update note:', sbErr.message);
+      }
+    }
+
+    return res.json({ message: `Registration status updated to ${newStatus}`, id, status: newStatus });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 });
 

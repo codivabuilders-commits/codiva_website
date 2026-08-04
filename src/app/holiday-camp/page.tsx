@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import styles from '../program-shared.module.css';
+import { getWhatsAppLink } from '@/config/contact';
 import {
   FaRocket,
   FaCode,
@@ -71,7 +72,7 @@ export default function HolidayCampPage() {
           </div>
           <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
             <a
-              href="https://wa.me/2348000000000?text=Hello!%20I'm%20interested%20in%20the%20Holiday%20Innovation%20Camp."
+              href={getWhatsAppLink("Hello! I'm interested in the Holiday Innovation Camp.")}
               className="btn btn-orange"
               style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
             >
@@ -143,7 +144,7 @@ export default function HolidayCampPage() {
                 ))}
               </ul>
               <a
-                href="https://wa.me/2348000000000?text=Hello!%20I'd%20like%20to%20register%20for%20the%20Holiday%20Innovation%20Camp."
+                href={getWhatsAppLink("Hello! I'd like to register for the Holiday Innovation Camp.")}
                 className="btn btn-orange"
                 style={{ width: '100%', display: 'flex', justifyContent: 'center', gap: '0.5rem' }}
               >

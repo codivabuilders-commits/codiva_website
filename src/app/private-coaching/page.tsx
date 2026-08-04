@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import styles from '../program-shared.module.css';
+import { getWhatsAppLink } from '@/config/contact';
 import {
   FaUserGraduate,
   FaCode,
@@ -63,7 +64,7 @@ export default function PrivateCoachingPage() {
           </div>
           <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
             <a
-              href="https://wa.me/2348000000000?text=Hello!%20I'd%20like%20to%20book%20a%20Private%20Coaching%20session%20for%20my%20child."
+              href={getWhatsAppLink("Hello! I'd like to book a Private Coaching session for my child.")}
               className="btn btn-orange"
               style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
             >
@@ -139,7 +140,7 @@ export default function PrivateCoachingPage() {
                   <li key={i}><FaCheckCircle style={{ color: '#10b981', flexShrink: 0 }} /> {f}</li>
                 ))}
               </ul>
-              <a href="https://wa.me/2348000000000?text=Hello!%20I'd%20like%20to%20book%20a%20Private%20Coaching%20session." className="btn btn-orange" style={{ width: '100%', display: 'flex', justifyContent: 'center', gap: '0.5rem' }}>
+              <a href={getWhatsAppLink("Hello! I'd like to book a Private Coaching session.")} className="btn btn-orange" style={{ width: '100%', display: 'flex', justifyContent: 'center', gap: '0.5rem' }}>
                 <FaWhatsapp /> Book Now
               </a>
             </div>
@@ -152,7 +153,7 @@ export default function PrivateCoachingPage() {
                   <li key={i}><FaCheckCircle style={{ color: '#10b981', flexShrink: 0 }} /> {f}</li>
                 ))}
               </ul>
-              <a href="https://wa.me/2348000000000?text=Hello!%20I'd%20like%20to%20book%20a%20monthly%20bundle%20for%20Private%20Coaching." className="btn btn-orange" style={{ width: '100%', display: 'flex', justifyContent: 'center', gap: '0.5rem' }}>
+              <a href={getWhatsAppLink("Hello! I'd like to book a monthly bundle for Private Coaching.")} className="btn btn-orange" style={{ width: '100%', display: 'flex', justifyContent: 'center', gap: '0.5rem' }}>
                 <FaWhatsapp /> Get Bundle
               </a>
             </div>

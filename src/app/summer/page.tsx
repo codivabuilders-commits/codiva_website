@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Image from 'next/image';
 import styles from './summer.module.css';
 import SummerRegistrationForm from '@/components/SummerRegistrationForm';
+import { getWhatsAppLink } from '@/config/contact';
 import {
   FaStar,
   FaRocket,
@@ -379,7 +380,7 @@ export default function SummerPage() {
 
       {/* FLOATING WHATSAPP BUTTON */}
       <a
-        href="https://wa.me/2348105281572"
+        href={getWhatsAppLink()}
         className="whatsapp-float"
         aria-label="Chat with Codiva Builders on WhatsApp"
         target="_blank"

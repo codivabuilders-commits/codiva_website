@@ -4,6 +4,7 @@ import React, { useState, useRef } from 'react';
 import Link from 'next/link';
 import styles from './page.module.css';
 import EnrollmentForm from '../components/EnrollmentForm';
+import { getWhatsAppLink } from '@/config/contact';
 import {
   FaSmile, FaTools, FaUsers, FaGlobe, FaChalkboardTeacher, FaRocket,
   FaGamepad, FaCode, FaPython, FaPalette, FaRobot, FaStar, FaWhatsapp,
@@ -151,7 +152,7 @@ export default function Home() {
           <p className={styles.whatsappCtaText}>
             Whether your child is just starting out or ready for advanced projects, our team will help you choose the best path.
           </p>
-          <a href="https://wa.me/2348000000000?text=Hello%20Codiva%20Builders%2C%20I'd%20like%20help%20choosing%20a%20program." className={styles.whatsappBtn} target="_blank" rel="noopener noreferrer">
+          <a href={getWhatsAppLink("Hello Codiva Builders, I'd like help choosing a program.")} className={styles.whatsappBtn} target="_blank" rel="noopener noreferrer">
             <FaWhatsapp style={{ fontSize: '1.2em' }} /> Talk to Our Team on WhatsApp
           </a>
         </div>
@@ -284,7 +285,7 @@ export default function Home() {
           <p className={styles.ctaSubtitle}>Enroll now before the next class begins. Join Codiva Builders today.</p>
           <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
             <button onClick={() => openEnrollModal()} className="btn" style={{ background: 'white', color: 'var(--secondary-orange)', fontWeight: 700 }}>Enroll Now</button>
-            <a href="https://wa.me/2348000000000" className="btn" style={{ background: 'rgba(255,255,255,0.12)', color: 'white', border: '1.5px solid rgba(255,255,255,0.5)', fontWeight: 700 }}>
+            <a href={getWhatsAppLink()} className="btn" style={{ background: 'rgba(255,255,255,0.12)', color: 'white', border: '1.5px solid rgba(255,255,255,0.5)', fontWeight: 700 }}>
               <FaWhatsapp style={{ marginRight: '0.4rem' }} /> WhatsApp Us
             </a>
           </div>
@@ -326,7 +327,7 @@ export default function Home() {
 
       <EnrollmentForm isOpen={isEnrollModalOpen} onClose={closeEnrollModal} />
 
-      <a href="https://wa.me/2348000000000" className="whatsapp-float" aria-label="Chat on WhatsApp" target="_blank" rel="noopener noreferrer">
+      <a href={getWhatsAppLink()} className="whatsapp-float" aria-label="Chat on WhatsApp" target="_blank" rel="noopener noreferrer">
         <FaWhatsapp />
       </a>
     </main>

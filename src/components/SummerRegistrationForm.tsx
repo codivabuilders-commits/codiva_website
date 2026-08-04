@@ -3,24 +3,25 @@
 import React, { useState } from 'react';
 import styles from './SummerRegistrationForm.module.css';
 import { API_BASE_URL } from '@/config/api';
+import { getWhatsAppLink } from '@/config/contact';
+import { initializePaystackPayment } from '@/utils/paystack';
 import {
   FaFire,
   FaArrowRight,
   FaArrowLeft,
   FaCheckCircle,
   FaWhatsapp,
+  FaPlus,
+  FaTrash,
+  FaCreditCard,
+  FaBookmark,
+  FaPrint,
 } from 'react-icons/fa';
 
-export interface SummerFormData {
-  parentName: string;
-  childName: string;
-  childAge: string;
-  countryCode: string;
-  whatsappNumber: string;
-  email: string;
-  preferredCampus: string;
-  agreeUpdates: boolean;
-  websiteHoneypot: string;
+export interface SummerChildEntry {
+  name: string;
+  age: string;
+  campus: string;
 }
 
 export function getTrackByAge(ageNum: number) {
@@ -28,25 +29,25 @@ export function getTrackByAge(ageNum: number) {
     return {
       name: 'Junior Builders',
       theme: 'Imagine & Create',
-      ageLabel: 'Ages 6–8'
+      ageLabel: 'Ages 6–8',
     };
   } else if (ageNum >= 9 && ageNum <= 12) {
     return {
       name: 'Intermediate Builders',
       theme: 'Design & Build',
-      ageLabel: 'Ages 9–12'
+      ageLabel: 'Ages 9–12',
     };
   } else if (ageNum >= 13 && ageNum <= 17) {
     return {
       name: 'Senior Builders',
       theme: 'Build & Innovate',
-      ageLabel: 'Ages 13–17'
+      ageLabel: 'Ages 13–17',
     };
   }
   return {
-    name: 'Select Child Age',
+    name: 'Custom Builder Track',
     theme: 'Custom Track Assignment',
-    ageLabel: 'Ages 6–17'
+    ageLabel: 'Ages 6–17',
   };
 }
 
@@ -54,33 +55,59 @@ export default function SummerRegistrationForm() {
   const [step, setStep] = useState<1 | 2>(1);
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
+  const [savedRegistration, setSavedRegistration] = useState<any>(null);
 
-  const [formData, setFormData] = useState<SummerFormData>({
-    parentName: '',
-    childName: '',
-    childAge: '9',
-    countryCode: '+234',
-    whatsappNumber: '',
-    email: '',
-    preferredCampus: 'Online / Virtual Campus',
-    agreeUpdates: true,
-    websiteHoneypot: '',
-  });
+  const [parentName, setParentName] = useState('');
+  const [countryCode, setCountryCode] = useState('+234');
+  const [whatsappNumber, setWhatsappNumber] = useState('');
+  const [email, setEmail] = useState('');
+  const [agreeUpdates, setAgreeUpdates] = useState(true);
+  const [websiteHoneypot, setWebsiteHoneypot] = useState('');
 
-  const ageNumber = parseInt(formData.childAge, 10) || 9;
-  const currentTrack = getTrackByAge(ageNumber);
+  const [children, setChildren] = useState<SummerChildEntry[]>([
+    { name: '', age: '9', campus: 'Online / Virtual Campus' },
+  ]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const target = e.target;
-    const value = target.type === 'checkbox' ? (target as HTMLInputElement).checked : target.value;
-    setFormData((prev) => ({ ...prev, [target.name]: value }));
+  // Pricing Engine (₦50,000 per child base)
+  const basePricePerChild = 50000;
+  const childCount = children.length;
+  const subtotal = childCount * basePricePerChild;
+  const hasDiscount = childCount >= 2;
+  const discountPercentage = hasDiscount ? 0.20 : 0;
+  const discountAmount = subtotal * discountPercentage;
+  const finalTotal = subtotal - discountAmount;
+
+  const handleAddChild = () => {
+    setChildren((prev) => [
+      ...prev,
+      { name: '', age: '10', campus: 'Online / Virtual Campus' },
+    ]);
+  };
+
+  const handleRemoveChild = (index: number) => {
+    if (children.length <= 1) return;
+    setChildren((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleChildChange = (index: number, field: keyof SummerChildEntry, value: string) => {
+    setChildren((prev) => {
+      const copy = [...prev];
+      copy[index] = { ...copy[index], [field]: value };
+      return copy;
+    });
   };
 
   const handleNextStep = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.parentName.trim() || !formData.childName.trim()) {
-      setErrorMessage('Please fill in both Parent/Guardian name and Child full name.');
+    if (!parentName.trim()) {
+      setErrorMessage('Please enter Parent / Guardian Name.');
       return;
+    }
+    for (let i = 0; i < children.length; i++) {
+      if (!children[i].name.trim()) {
+        setErrorMessage(`Please fill in Child #${i + 1} full name.`);
+        return;
+      }
     }
     setErrorMessage('');
     setStep(2);
@@ -91,15 +118,13 @@ export default function SummerRegistrationForm() {
     setStep(1);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (formData.websiteHoneypot) {
+  const executeRegistration = async (paymentMethod: 'Paystack' | 'Pay Later', paymentRef?: string) => {
+    if (websiteHoneypot) {
       setStatus('success');
       return;
     }
 
-    if (!formData.whatsappNumber.trim() || !formData.email.trim()) {
+    if (!whatsappNumber.trim() || !email.trim()) {
       setErrorMessage('Please provide your WhatsApp phone number and Email address.');
       return;
     }
@@ -108,16 +133,28 @@ export default function SummerRegistrationForm() {
     setErrorMessage('');
 
     try {
-      const fullPhone = `${formData.countryCode} ${formData.whatsappNumber}`;
+      const fullPhone = `${countryCode} ${whatsappNumber}`;
+      const processedChildren = children.map((c) => {
+        const trackInfo = getTrackByAge(parseInt(c.age, 10) || 9);
+        return {
+          name: c.name,
+          age: c.age,
+          course: `${trackInfo.name} (${trackInfo.theme})`,
+          schedule: c.campus,
+        };
+      });
+
       const payload = {
-        parentName: formData.parentName,
-        childName: formData.childName,
-        childAge: formData.childAge,
-        assignedTrack: currentTrack.name,
+        parentName,
         parentPhone: fullPhone,
-        parentEmail: formData.email,
-        preferredCampus: formData.preferredCampus,
-        agreeUpdates: formData.agreeUpdates,
+        parentEmail: email,
+        children: processedChildren,
+        preferredCampus: children[0]?.campus || 'Online / Virtual Campus',
+        agreeUpdates,
+        basePricePerChild,
+        paymentMethod,
+        paymentStatus: paymentMethod === 'Paystack' ? 'Paid' : 'Pending Payment',
+        paymentReference: paymentRef || `CBD_SUMMER_${Date.now()}`,
       };
 
       let response;
@@ -135,64 +172,147 @@ export default function SummerRegistrationForm() {
         });
       }
 
-      if (response.ok) {
+      const resData = await response.json();
+
+      if (response.ok || resData.data) {
+        setSavedRegistration({
+          parentName,
+          parentPhone: fullPhone,
+          email,
+          children: processedChildren,
+          finalTotal,
+          discountAmount,
+          paymentMethod,
+          paymentStatus: payload.paymentStatus,
+          reference: payload.paymentReference,
+        });
         setStatus('success');
       } else {
-        const data = await response.json();
-        setErrorMessage(data.error || 'Failed to complete registration. Please try again.');
+        setErrorMessage(resData.error || 'Failed to complete registration. Please try again.');
         setStatus('error');
       }
     } catch (err) {
       console.error('Summer registration error:', err);
+      setSavedRegistration({
+        parentName,
+        parentPhone: `${countryCode} ${whatsappNumber}`,
+        email,
+        children: children.map((c) => ({
+          name: c.name,
+          age: c.age,
+          course: getTrackByAge(parseInt(c.age, 10) || 9).name,
+          schedule: c.campus,
+        })),
+        finalTotal,
+        discountAmount,
+        paymentMethod,
+        paymentStatus: paymentMethod === 'Paystack' ? 'Paid' : 'Pending Payment',
+        reference: paymentRef || `CBD_SUMMER_${Date.now()}`,
+      });
       setStatus('success');
     }
   };
 
-  const whatsappMessage = encodeURIComponent(
-    `Hello Codiva Builders! I just registered my child (${formData.childName}, Age ${formData.childAge}) for the Summer Innovation Academy (${currentTrack.name}). My contact email is ${formData.email}.`
-  );
-  const whatsappLink = `https://wa.me/2340000000000?text=${whatsappMessage}`;
+  const handlePayNow = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!whatsappNumber.trim() || !email.trim()) {
+      setErrorMessage('Please enter WhatsApp number and Email.');
+      return;
+    }
+
+    initializePaystackPayment({
+      email,
+      amountNaira: finalTotal,
+      metadata: { parentName, parentPhone: `${countryCode} ${whatsappNumber}`, childCount },
+      onSuccess: (ref) => {
+        executeRegistration('Paystack', ref);
+      },
+      onError: (err) => {
+        setErrorMessage(err);
+      },
+    });
+  };
+
+  const handlePayLater = (e: React.FormEvent) => {
+    e.preventDefault();
+    executeRegistration('Pay Later');
+  };
+
+  const whatsappMessage = savedRegistration
+    ? `Hello Codiva Builders! 🎉 I just registered for Summer Innovation Academy 2026.\n` +
+      `Parent: ${savedRegistration.parentName}\n` +
+      `Enrolled Children: ${savedRegistration.children.map((c: any) => `${c.name} (${c.course})`).join(', ')}\n` +
+      `Status: ${savedRegistration.paymentStatus}\n` +
+      `Total: ₦${savedRegistration.finalTotal.toLocaleString()}`
+    : 'Hello Codiva Builders! I just registered my child for the Summer Innovation Academy.';
 
   return (
     <div className={styles.container} id="register">
-      {status === 'success' ? (
+      {status === 'success' && savedRegistration ? (
         <div className={styles.successContainer}>
           <div className={styles.successIcon} style={{ color: '#10b981' }}>
             <FaCheckCircle />
           </div>
-          <h2 className={styles.successTitle}>Thank you for registering!</h2>
+          <h2 className={styles.successTitle}>🎉 Congratulations!</h2>
           <p className={styles.successDesc}>
-            We've received your registration for the <strong>Summer Innovation Academy 2026</strong>.
-            Our admissions team will contact you via WhatsApp within 24 hours to confirm your child's seat.
+            Your child has been successfully enrolled in <strong>Codiva Builders Summer Program</strong>.
+            <br />
+            A confirmation has been sent to your email and WhatsApp. We can't wait to meet your child!
           </p>
 
-          <div className={styles.summaryCard}>
+          <div className={styles.summaryCard} id="summer-receipt">
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.5rem' }}>
+              <span style={{ fontWeight: 800, color: '#0f172a' }}>Summer Academy 2026 Enrollment</span>
+              <span style={{ fontWeight: 700, color: savedRegistration.paymentStatus === 'Paid' ? '#16a34a' : '#d97706' }}>
+                {savedRegistration.paymentStatus === 'Paid' ? 'Paid ✓' : 'Pending Payment (Spot Reserved)'}
+              </span>
+            </div>
+
             <div className={styles.summaryRow}>
               <span className={styles.summaryLabel}>Parent / Guardian:</span>
-              <span className={styles.summaryValue}>{formData.parentName}</span>
+              <span className={styles.summaryValue}>{savedRegistration.parentName}</span>
             </div>
             <div className={styles.summaryRow}>
-              <span className={styles.summaryLabel}>Child's Name:</span>
-              <span className={styles.summaryValue}>{formData.childName} (Age {formData.childAge})</span>
+              <span className={styles.summaryLabel}>Phone / Email:</span>
+              <span className={styles.summaryValue}>{savedRegistration.parentPhone} ({savedRegistration.email})</span>
             </div>
-            <div className={styles.summaryRow}>
-              <span className={styles.summaryLabel}>Assigned Track:</span>
-              <span className={styles.summaryValue} style={{ color: '#0A66C2' }}>{currentTrack.name}</span>
+
+            <div style={{ margin: '0.75rem 0', background: '#eff6ff', padding: '0.75rem', borderRadius: '8px' }}>
+              <strong style={{ fontSize: '0.85rem', color: '#0A66C2' }}>Enrolled Children:</strong>
+              {savedRegistration.children.map((c: any, idx: number) => (
+                <div key={idx} style={{ fontSize: '0.85rem', marginTop: '0.25rem' }}>
+                  • <strong>{c.name}</strong> (Age {c.age}) — {c.course}
+                </div>
+              ))}
             </div>
-            <div className={styles.summaryRow}>
-              <span className={styles.summaryLabel}>Campus:</span>
-              <span className={styles.summaryValue}>{formData.preferredCampus}</span>
+
+            {savedRegistration.discountAmount > 0 && (
+              <div className={styles.summaryRow} style={{ color: '#16a34a', fontWeight: 700 }}>
+                <span className={styles.summaryLabel}>Multi-child Savings (20% Off):</span>
+                <span className={styles.summaryValue}>-₦{savedRegistration.discountAmount.toLocaleString()}</span>
+              </div>
+            )}
+
+            <div className={styles.summaryRow} style={{ fontWeight: 800, fontSize: '1.05rem', marginTop: '0.5rem' }}>
+              <span className={styles.summaryLabel}>Total Amount:</span>
+              <span className={styles.summaryValue}>₦{savedRegistration.finalTotal.toLocaleString()}</span>
             </div>
           </div>
 
-          <a
-            href={whatsappLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.whatsappBtn}
-          >
-            <FaWhatsapp style={{ fontSize: '1.25rem' }} /> Chat directly on WhatsApp
-          </a>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <a
+              href={getWhatsAppLink(whatsappMessage)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.whatsappBtn}
+            >
+              <FaWhatsapp style={{ fontSize: '1.25rem' }} /> Confirm via WhatsApp
+            </a>
+
+            <button onClick={() => window.print()} style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', padding: '0.75rem', borderRadius: '10px', fontWeight: 600, cursor: 'pointer' }}>
+              <FaPrint /> Print / Save Receipt
+            </button>
+          </div>
         </div>
       ) : (
         <>
@@ -201,13 +321,15 @@ export default function SummerRegistrationForm() {
           </div>
 
           <h2 className={styles.title}>Reserve Your Child's Spot</h2>
-          <p className={styles.subtitle}>Limited spaces available. Secure your child's future-ready seat today.</p>
+          <p className={styles.subtitle}>
+            Register one or multiple children. Enjoy <strong>20% discount on each child</strong> when enrolling 2 or more children!
+          </p>
 
           {/* Progress Indicator */}
           <div className={styles.progressContainer}>
             <div className={styles.progressHeader}>
               <span>Step {step} of 2</span>
-              <span>{step === 1 ? 'Parent & Child Information' : 'Program Track & Contact'}</span>
+              <span>{step === 1 ? 'Parent & Children Information' : 'Contact & Payment Selection'}</span>
             </div>
             <div className={styles.progressBarTrack}>
               <div
@@ -224,8 +346,8 @@ export default function SummerRegistrationForm() {
               <input
                 type="text"
                 name="websiteHoneypot"
-                value={formData.websiteHoneypot}
-                onChange={handleChange}
+                value={websiteHoneypot}
+                onChange={(e) => setWebsiteHoneypot(e.target.value)}
                 className={styles.honeyInput}
                 tabIndex={-1}
                 autoComplete="off"
@@ -235,55 +357,84 @@ export default function SummerRegistrationForm() {
                 <label className={styles.label}>Parent / Guardian Name *</label>
                 <input
                   type="text"
-                  name="parentName"
                   required
                   placeholder="e.g. Mary Okon"
                   className={styles.input}
-                  value={formData.parentName}
-                  onChange={handleChange}
+                  value={parentName}
+                  onChange={(e) => setParentName(e.target.value)}
                 />
               </div>
 
-              <div className={styles.formGrid}>
-                <div className={styles.formGroup}>
-                  <label className={styles.label}>Child's Full Name *</label>
-                  <input
-                    type="text"
-                    name="childName"
-                    required
-                    placeholder="e.g. David Okon"
-                    className={styles.input}
-                    value={formData.childName}
-                    onChange={handleChange}
-                  />
-                </div>
-
-                <div className={styles.formGroup}>
-                  <label className={styles.label}>Child's Age *</label>
-                  <select
-                    name="childAge"
-                    required
-                    className={styles.select}
-                    value={formData.childAge}
-                    onChange={handleChange}
-                  >
-                    {[6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17].map((age) => (
-                      <option key={age} value={age}>
-                        {age} years old
-                      </option>
-                    ))}
-                  </select>
-                </div>
+              {/* Multi-Children Entries */}
+              <div style={{ marginTop: '0.5rem', marginBottom: '0.5rem', fontWeight: 700, color: '#0A66C2' }}>
+                Children Details ({children.length} {children.length === 1 ? 'Child' : 'Children'})
               </div>
 
-              {/* Dynamic Assigned Track Preview */}
-              <div className={styles.trackPreviewCard}>
-                <div className={styles.trackInfo}>
-                  <span className={styles.trackTag}>Automatically Assigned Learning Track</span>
-                  <span className={styles.trackTitle}>{currentTrack.name} ({currentTrack.theme})</span>
-                </div>
-                <span className={styles.trackBadge}>{currentTrack.ageLabel}</span>
-              </div>
+              {children.map((child, idx) => {
+                const track = getTrackByAge(parseInt(child.age, 10) || 9);
+                return (
+                  <div key={idx} style={{ background: '#f8fafc', border: '1.5px solid #e2e8f0', borderRadius: '12px', padding: '1rem', marginBottom: '1rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                      <span style={{ fontWeight: 700, fontSize: '0.9rem' }}>Child #{idx + 1}</span>
+                      {children.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveChild(idx)}
+                          style={{ background: '#fee2e2', color: '#ef4444', border: 'none', padding: '0.2rem 0.5rem', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem' }}
+                        >
+                          <FaTrash /> Remove
+                        </button>
+                      )}
+                    </div>
+
+                    <div className={styles.formGrid}>
+                      <div className={styles.formGroup}>
+                        <label className={styles.label}>Child's Full Name *</label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="e.g. David Okon"
+                          className={styles.input}
+                          value={child.name}
+                          onChange={(e) => handleChildChange(idx, 'name', e.target.value)}
+                        />
+                      </div>
+
+                      <div className={styles.formGroup}>
+                        <label className={styles.label}>Child's Age *</label>
+                        <select
+                          className={styles.select}
+                          value={child.age}
+                          onChange={(e) => handleChildChange(idx, 'age', e.target.value)}
+                        >
+                          {[6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17].map((age) => (
+                            <option key={age} value={age}>
+                              {age} years old
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Auto-Assigned Track */}
+                    <div className={styles.trackPreviewCard} style={{ marginTop: '0.75rem' }}>
+                      <div className={styles.trackInfo}>
+                        <span className={styles.trackTag}>Assigned Track</span>
+                        <span className={styles.trackTitle}>{track.name} ({track.theme})</span>
+                      </div>
+                      <span className={styles.trackBadge}>{track.ageLabel}</span>
+                    </div>
+                  </div>
+                );
+              })}
+
+              <button
+                type="button"
+                onClick={handleAddChild}
+                style={{ background: '#eff6ff', color: '#0A66C2', border: '1.5px dashed #93c5fd', width: '100%', padding: '0.75rem', borderRadius: '10px', fontWeight: 700, cursor: 'pointer', marginBottom: '1rem' }}
+              >
+                <FaPlus /> Add Another Child (20% Off Each)
+              </button>
 
               <div className={styles.buttonRow}>
                 <button type="submit" className={styles.btnPrimary}>
@@ -292,15 +443,14 @@ export default function SummerRegistrationForm() {
               </div>
             </form>
           ) : (
-            <form className={styles.form} onSubmit={handleSubmit}>
+            <form className={styles.form}>
               <div className={styles.formGroup}>
                 <label className={styles.label}>WhatsApp Phone Number *</label>
                 <div className={styles.phoneGroup}>
                   <select
-                    name="countryCode"
                     className={styles.countryCodeSelect}
-                    value={formData.countryCode}
-                    onChange={handleChange}
+                    value={countryCode}
+                    onChange={(e) => setCountryCode(e.target.value)}
                   >
                     <option value="+234">🇳🇬 +234</option>
                     <option value="+1">🇺🇸 +1</option>
@@ -312,12 +462,11 @@ export default function SummerRegistrationForm() {
                   </select>
                   <input
                     type="tel"
-                    name="whatsappNumber"
                     required
                     placeholder="8012345678"
                     className={`${styles.input} ${styles.phoneInput}`}
-                    value={formData.whatsappNumber}
-                    onChange={handleChange}
+                    value={whatsappNumber}
+                    onChange={(e) => setWhatsappNumber(e.target.value)}
                   />
                 </div>
               </div>
@@ -326,49 +475,69 @@ export default function SummerRegistrationForm() {
                 <label className={styles.label}>Parent Email Address *</label>
                 <input
                   type="email"
-                  name="email"
                   required
                   placeholder="parent@example.com"
                   className={styles.input}
-                  value={formData.email}
-                  onChange={handleChange}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
 
-              <div className={styles.formGroup}>
-                <label className={styles.label}>Preferred Campus (Optional)</label>
-                <select
-                  name="preferredCampus"
-                  className={styles.select}
-                  value={formData.preferredCampus}
-                  onChange={handleChange}
-                >
-                  <option value="Online / Virtual Campus">Online / Virtual Campus</option>
-                  {/* <option value="Lagos Physical Campus">Lagos Physical Campus</option> */}
-                </select>
+              {/* Fee & Discount Summary */}
+              <div style={{ background: '#fff7ed', border: '1.5px solid #fdba74', borderRadius: '12px', padding: '1rem', margin: '1rem 0' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', color: '#475569' }}>
+                  <span>Base Fee (₦50,000 × {childCount}):</span>
+                  <span>₦{subtotal.toLocaleString()}</span>
+                </div>
+
+                {hasDiscount && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', color: '#16a34a', fontWeight: 700, marginTop: '0.4rem' }}>
+                    <span>Multi-child Discount (20% Off Each):</span>
+                    <span>-₦{discountAmount.toLocaleString()}</span>
+                  </div>
+                )}
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.1rem', fontWeight: 800, borderTop: '1px dashed #fdba74', paddingTop: '0.5rem', marginTop: '0.5rem' }}>
+                  <span>Total Amount:</span>
+                  <span>₦{finalTotal.toLocaleString()}</span>
+                </div>
               </div>
 
               <label className={styles.checkboxContainer}>
                 <input
                   type="checkbox"
-                  name="agreeUpdates"
-                  checked={formData.agreeUpdates}
-                  onChange={handleChange}
+                  checked={agreeUpdates}
+                  onChange={(e) => setAgreeUpdates(e.target.checked)}
                   className={styles.checkboxInput}
                 />
-                <span>I agree to receive academy updates and schedule details from Codiva Builders via WhatsApp and Email.</span>
+                <span>I agree to receive academy updates and schedule details via WhatsApp and Email.</span>
               </label>
 
-              <div className={styles.buttonRow}>
+              <div className={styles.buttonRow} style={{ marginTop: '1rem' }}>
                 <button type="button" onClick={handlePrevStep} className={styles.btnSecondary}>
                   <FaArrowLeft style={{ display: 'inline', marginRight: '0.4rem' }} /> Back
                 </button>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginTop: '0.75rem' }}>
                 <button
-                  type="submit"
+                  type="button"
+                  onClick={handlePayNow}
                   disabled={status === 'loading'}
                   className={styles.btnPrimary}
+                  style={{ background: '#10b981' }}
                 >
-                  {status === 'loading' ? 'Processing...' : 'Register Now'}
+                  <FaCreditCard /> {status === 'loading' ? 'Processing...' : 'Pay Now (Paystack)'}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handlePayLater}
+                  disabled={status === 'loading'}
+                  className={styles.btnSecondary}
+                  style={{ borderColor: '#0A66C2', color: '#0A66C2' }}
+                >
+                  <FaBookmark /> Reserve & Pay Later
                 </button>
               </div>
             </form>

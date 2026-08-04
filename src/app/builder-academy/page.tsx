@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import styles from '../program-shared.module.css';
+import { getWhatsAppLink } from '@/config/contact';
 import {
   FaSchool,
   FaRocket,
@@ -76,7 +77,7 @@ export default function BuilderAcademyPage() {
           </div>
           <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
             <a
-              href="https://wa.me/2348000000000?text=Hello!%20I'm%20interested%20in%20enrolling%20in%20Builder%20Academy."
+              href={getWhatsAppLink("Hello! I'm interested in enrolling in Builder Academy.")}
               className="btn btn-orange"
               style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
             >
@@ -172,7 +173,7 @@ export default function BuilderAcademyPage() {
                 ))}
               </ul>
               <a
-                href="https://wa.me/2348000000000?text=Hello!%20I'd%20like%20to%20enroll%20in%20Builder%20Academy."
+                href={getWhatsAppLink("Hello! I'd like to enroll in Builder Academy.")}
                 className="btn btn-orange"
                 style={{ width: '100%', display: 'flex', justifyContent: 'center', gap: '0.5rem' }}
               >
@@ -207,7 +208,7 @@ export default function BuilderAcademyPage() {
           <h2 className={styles.ctaTitle}>Ready to Enroll in Builder Academy?</h2>
           <p className={styles.ctaSubtitle}>Secure your child&apos;s spot before the next term begins. Limited spaces available.</p>
           <a
-            href="https://wa.me/2348000000000?text=Hello!%20I'd%20like%20to%20register%20my%20child%20for%20Builder%20Academy."
+            href={getWhatsAppLink("Hello! I'd like to register my child for Builder Academy.")}
             className="btn"
             style={{ background: 'white', color: 'var(--secondary-orange)', fontWeight: '700', display: 'inline-flex', gap: '0.5rem', alignItems: 'center' }}
           >

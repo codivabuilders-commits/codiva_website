@@ -105,15 +105,31 @@ async function pingDatabase() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS enrollments (
       id SERIAL PRIMARY KEY,
-      child_name VARCHAR(255) NOT NULL,
-      child_age INT NOT NULL,
+      child_name VARCHAR(255) DEFAULT '',
+      child_age INT DEFAULT 0,
       parent_name VARCHAR(255) NOT NULL,
       parent_email VARCHAR(255) NOT NULL,
       parent_phone VARCHAR(50) NOT NULL,
-      course VARCHAR(255) NOT NULL,
-      learning_mode VARCHAR(50) NOT NULL,
+      course VARCHAR(255) DEFAULT 'General Course',
+      learning_mode VARCHAR(50) DEFAULT 'Online',
+      children_json JSONB,
+      amount NUMERIC DEFAULT 0,
+      discount_amount NUMERIC DEFAULT 0,
+      payment_status VARCHAR(50) DEFAULT 'Pending Payment',
+      payment_method VARCHAR(50) DEFAULT 'Pay Later',
+      payment_reference VARCHAR(255),
       created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
     );
+  `);
+
+  // Migrate: add new payment columns to enrollments if not present
+  await pool.query(`
+    ALTER TABLE enrollments ADD COLUMN IF NOT EXISTS children_json JSONB;
+    ALTER TABLE enrollments ADD COLUMN IF NOT EXISTS amount NUMERIC DEFAULT 0;
+    ALTER TABLE enrollments ADD COLUMN IF NOT EXISTS discount_amount NUMERIC DEFAULT 0;
+    ALTER TABLE enrollments ADD COLUMN IF NOT EXISTS payment_status VARCHAR(50) DEFAULT 'Pending Payment';
+    ALTER TABLE enrollments ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50) DEFAULT 'Pay Later';
+    ALTER TABLE enrollments ADD COLUMN IF NOT EXISTS payment_reference VARCHAR(255);
   `);
 
   // Ensure Codiva Builders summer_registrations table exists
@@ -121,18 +137,34 @@ async function pingDatabase() {
     CREATE TABLE IF NOT EXISTS summer_registrations (
       id SERIAL PRIMARY KEY,
       parent_name VARCHAR(255) NOT NULL,
-      child_name VARCHAR(255) NOT NULL,
-      child_age INT NOT NULL,
-      assigned_track VARCHAR(255) NOT NULL,
+      child_name VARCHAR(255) DEFAULT '',
+      child_age INT DEFAULT 0,
+      assigned_track VARCHAR(255) DEFAULT 'Summer Track',
       parent_phone VARCHAR(50) NOT NULL,
       parent_email VARCHAR(255) NOT NULL,
       preferred_campus VARCHAR(100) DEFAULT 'Online / Virtual Campus',
       agree_updates BOOLEAN DEFAULT true,
+      children_json JSONB,
+      amount NUMERIC DEFAULT 0,
+      discount_amount NUMERIC DEFAULT 0,
+      payment_status VARCHAR(50) DEFAULT 'Pending Payment',
+      payment_method VARCHAR(50) DEFAULT 'Pay Later',
+      payment_reference VARCHAR(255),
       created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
     );
   `);
 
-  console.log('[DB] Database tables initialized successfully.');
+  // Migrate: add new payment columns to summer_registrations if not present
+  await pool.query(`
+    ALTER TABLE summer_registrations ADD COLUMN IF NOT EXISTS children_json JSONB;
+    ALTER TABLE summer_registrations ADD COLUMN IF NOT EXISTS amount NUMERIC DEFAULT 0;
+    ALTER TABLE summer_registrations ADD COLUMN IF NOT EXISTS discount_amount NUMERIC DEFAULT 0;
+    ALTER TABLE summer_registrations ADD COLUMN IF NOT EXISTS payment_status VARCHAR(50) DEFAULT 'Pending Payment';
+    ALTER TABLE summer_registrations ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50) DEFAULT 'Pay Later';
+    ALTER TABLE summer_registrations ADD COLUMN IF NOT EXISTS payment_reference VARCHAR(255);
+  `);
+
+  console.log('[DB] Database tables & migrations applied successfully.');
 }
 
 module.exports = { pool, pingDatabase };
