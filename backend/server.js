@@ -58,6 +58,22 @@ app.get('/', (req, res) => {
   });
 });
 
+app.get('/api/health', (_req, res) => {
+  res.json({ status: 'ok' });
+});
+
+app.get('/api/codivaheart', async (_req, res) => {
+  try {
+    await pool.query(
+      'UPDATE codivaheart SET last_ping = CURRENT_TIMESTAMP, counter = counter + 1 WHERE id = 1'
+    );
+    res.status(200).json({ status: 'alive', heart: 'beating' });
+  } catch (err) {
+    console.error('CodivaHeart check failed', err);
+    res.status(500).json({ error: 'Heartbeat failed' });
+  }
+});
+
 // Helper for multi-children processing & discount engine
 function calculateMultiChildDiscount(childrenList = [], basePricePerChild = 40000) {
   const childCount = childrenList.length || 1;
