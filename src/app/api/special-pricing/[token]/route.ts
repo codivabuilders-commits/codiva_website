@@ -3,10 +3,10 @@ import { API_BASE_URL } from '@/config/api';
 
 export async function GET(
   req: Request,
-  { params }: { params: { token: string } }
+  { params }: { params: Promise<{ token: string }> }
 ) {
   try {
-    const token = params.token;
+    const { token } = await params;
     const res = await fetch(`${API_BASE_URL}/api/special-pricing/${token}`, { cache: 'no-store' });
     const data = await res.json();
     return NextResponse.json(data, { status: res.status });
