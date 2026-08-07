@@ -1054,7 +1054,7 @@ export default function AdminDashboardPage() {
         )}
 
         {/* ========================================== */}
-        {/* VIEW 4: AUDIT LOGS */}
+        {/* VIEW 4: AUDIT LOGSs */}
         {/* ========================================== */}
         {mainNav === 'audit-logs' && (
           <>
