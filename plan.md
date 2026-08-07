@@ -117,7 +117,7 @@ Join Codiva Builders today.
 🔟 CONTACT SECTION
 Contact Us
 
-📍 Lagos, Nigeria
+📍 Kwara, Nigeria
 📞 +234 xxx xxx xxxx
 📧 codivabuilders@gmail.com
 

@@ -444,7 +444,7 @@ export default function SummerRegistrationForm() {
 
             {/* Footer Branding (Visible on Print & Screen) */}
             <div className={styles.printFooter}>
-              <div>📍 Lagos, Nigeria | 📧 codivabuilders@gmail.com | 📱 {DISPLAY_PHONE}</div>
+              <div>📍 Kwara, Nigeria | 📧 codivabuilders@gmail.com | 📱 {DISPLAY_PHONE}</div>
               <div>Codiva Builders • Kids & Teens Subsidiary of Veleon Academy</div>
             </div>
           </div>

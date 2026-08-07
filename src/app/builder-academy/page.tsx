@@ -21,7 +21,7 @@ import {
 export const metadata: Metadata = {
   title: 'Builder Academy | Codiva Builders',
   description:
-    'Our flagship 12-week school-term program where children aged 6–17 learn coding, AI, digital creativity, and problem-solving through hands-on projects. Saturdays in Lagos.',
+    'Our flagship 12-week school-term program where children aged 6–17 learn coding, AI, digital creativity, and problem-solving through hands-on projects. Saturdays in Kwara.',
 };
 
 const curriculum = [
@@ -145,7 +145,7 @@ export default function BuilderAcademyPage() {
               { label: 'Day', value: 'Saturday', icon: '📅' },
               { label: 'Time', value: '9:00 AM – 12:00 PM', icon: '🕘' },
               { label: 'Duration', value: '12 Weeks per Term', icon: '📆' },
-              { label: 'Location', value: 'Lagos (Physical + Online)', icon: '📍' },
+              { label: 'Location', value: 'Kwara (Physical + Online)', icon: '📍' },
             ].map((s, i) => (
               <div key={i} className={styles.card} style={{ alignItems: 'center', textAlign: 'center' }}>
                 <div style={{ fontSize: '2rem' }}>{s.icon}</div>
@@ -220,7 +220,7 @@ export default function BuilderAcademyPage() {
       {/* FOOTER */}
       <footer>
         <div className={styles.contact}>
-          <p>📍 Lagos, Nigeria &nbsp;|&nbsp; 📧 codivabuilders@gmail.com &nbsp;|&nbsp; 📱 @CodivaBuilders</p>
+          <p>📍 Kwara, Nigeria &nbsp;|&nbsp; 📧 codivabuilders@gmail.com &nbsp;|&nbsp; 📱 @CodivaBuilders</p>
         </div>
         <div className={styles.footer}>© 2026 Codiva Builders (Subsidiary of Veleon Academy). All rights reserved.</div>
       </footer>

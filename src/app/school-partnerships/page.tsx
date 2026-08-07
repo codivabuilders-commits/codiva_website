@@ -23,7 +23,7 @@ export const metadata: Metadata = {
 };
 
 const faqs = [
-  { q: 'What schools can partner with Codiva Builders?', a: 'We partner with primary and secondary schools across Lagos and beyond. Whether you\'re a public or private school, we have a program structure that can work for you.' },
+  { q: 'What schools can partner with Codiva Builders?', a: 'We partner with primary and secondary schools across Kwara and beyond. Whether you\'re a public or private school, we have a program structure that can work for you.' },
   { q: 'How is the curriculum integrated?', a: 'We work with your school\'s schedule to create a program that fits — either as an after-school club, elective subject, or dedicated technology period.' },
   { q: 'Do you provide instructors?', a: 'Yes. Our trained and experienced Codiva Builders instructors come directly to your school to deliver the program.' },
   { q: 'What equipment do students need?', a: 'We can work with your existing computer lab. Where equipment is limited, we can discuss device arrangements.' },
@@ -202,7 +202,7 @@ export default function SchoolPartnershipsPage() {
       {/* FOOTER */}
       <footer>
         <div className={styles.contact}>
-          <p>📍 Lagos, Nigeria &nbsp;|&nbsp; 📧 codivabuilders@gmail.com &nbsp;|&nbsp; 📱 @CodivaBuilders</p>
+          <p>📍 Kwara, Nigeria &nbsp;|&nbsp; 📧 codivabuilders@gmail.com &nbsp;|&nbsp; 📱 @CodivaBuilders</p>
         </div>
         <div className={styles.footer}>© 2026 Codiva Builders (Subsidiary of Veleon Academy). All rights reserved.</div>
       </footer>

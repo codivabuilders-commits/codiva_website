@@ -407,7 +407,7 @@ export default function EnrollmentForm({ isOpen, onClose }: EnrollmentFormProps)
               )}
 
               <div className={styles.printFooter}>
-                <div>📍 Lagos, Nigeria | 📧 codivabuilders@gmail.com | 📱 {DISPLAY_PHONE}</div>
+                <div>📍 Kwara, Nigeria | 📧 codivabuilders@gmail.com | 📱 {DISPLAY_PHONE}</div>
                 <div>Codiva Builders • Kids & Teens Subsidiary of Veleon Academy</div>
               </div>
             </div>
@@ -557,7 +557,7 @@ export default function EnrollmentForm({ isOpen, onClose }: EnrollmentFormProps)
                       >
                         <option value="Online (Virtual)">Online (Virtual)</option>
                         <option value="Weekend Saturday Classes">Weekend Saturday Classes</option>
-                        <option value="Physical Campus (Lagos)">Physical Campus (Lagos)</option>
+                        <option value="Physical Campus (Kwara)">Physical Campus (Kwara)</option>
                       </select>
                     </div>
                   </div>

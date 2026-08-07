@@ -19,7 +19,7 @@ import {
 export const metadata: Metadata = {
   title: 'Holiday Innovation Camp | Codiva Builders',
   description:
-    'A 2-week holiday coding and technology camp for children during Christmas, Easter, and other school breaks. Fun, hands-on learning in Lagos.',
+    'A 2-week holiday coding and technology camp for children during Christmas, Easter, and other school breaks. Fun, hands-on learning in Kwara.',
 };
 
 const curriculum = [
@@ -189,7 +189,7 @@ export default function HolidayCampPage() {
       {/* FOOTER */}
       <footer>
         <div className={styles.contact}>
-          <p>📍 Lagos, Nigeria &nbsp;|&nbsp; 📧 codivabuilders@gmail.com &nbsp;|&nbsp; 📱 @CodivaBuilders</p>
+          <p>📍 Kwara, Nigeria &nbsp;|&nbsp; 📧 codivabuilders@gmail.com &nbsp;|&nbsp; 📱 @CodivaBuilders</p>
         </div>
         <div className={styles.footer}>© 2026 Codiva Builders (Subsidiary of Veleon Academy). All rights reserved.</div>
       </footer>

@@ -37,7 +37,7 @@ const whyUs = [
   { icon: <FaSmile />, title: 'Beginner-friendly', desc: 'Designed for absolute beginners with zero experience.', color: 'var(--secondary-orange)' },
   { icon: <FaTools />, title: 'Real Projects', desc: 'Children build actual games, websites, and apps.', color: 'var(--fun-purple)' },
   { icon: <FaUsers />, title: 'Small Classes', desc: 'Personalized attention in small focused groups.', color: 'var(--primary-blue)' },
-  { icon: <FaGlobe />, title: 'Online & Physical', desc: 'Flexible learning — attend in Lagos or online.', color: 'var(--fun-green)' },
+  { icon: <FaGlobe />, title: 'Online & Physical', desc: 'Flexible learning — attend in Kwara or online.', color: 'var(--fun-green)' },
   { icon: <FaChalkboardTeacher />, title: 'Expert Instructors', desc: 'Experienced teachers who truly love kids.', color: 'var(--fun-pink)' },
   { icon: <FaRocket />, title: 'Confidence First', desc: 'Every child leaves feeling capable and proud.', color: 'var(--fun-yellow)' },
 ];
@@ -313,7 +313,7 @@ export default function Home() {
                 <Link href="/school-partnerships">School Partnerships</Link>
               </div>
               <div className={styles.footerContact}>
-                <p>📍 Lagos, Nigeria</p>
+                <p>📍 Kwara, Nigeria</p>
                 <p>📧 codivabuilders@gmail.com</p>
                 <p>📱 @CodivaBuilders</p>
               </div>

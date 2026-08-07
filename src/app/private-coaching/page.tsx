@@ -25,7 +25,7 @@ const faqs = [
   { q: 'How does Private Coaching work?', a: 'Private Coaching is a one-on-one session between your child and a dedicated Codiva Builders instructor. The curriculum is fully customized to your child\'s goals and pace.' },
   { q: 'How long is each session?', a: 'Each session is typically 1 to 1.5 hours. The frequency and duration can be adjusted to suit your family\'s schedule.' },
   { q: 'Can I choose what my child learns?', a: 'Yes! We start with an assessment session to understand your child\'s interests and goals, then build a learning plan around them.' },
-  { q: 'Is Private Coaching online or physical?', a: 'We offer both online and physical (Lagos) sessions, depending on your preference and availability.' },
+  { q: 'Is Private Coaching online or physical?', a: 'We offer both online and physical (Kwara) sessions, depending on your preference and availability.' },
   { q: 'How do I book a session?', a: 'Simply message us on WhatsApp or fill out the inquiry form and we\'ll schedule your first session within 48 hours.' },
 ];
 
@@ -195,7 +195,7 @@ export default function PrivateCoachingPage() {
       {/* FOOTER */}
       <footer>
         <div className={styles.contact}>
-          <p>📍 Lagos, Nigeria &nbsp;|&nbsp; 📧 codivabuilders@gmail.com &nbsp;|&nbsp; 📱 @CodivaBuilders</p>
+          <p>📍 Kwara, Nigeria &nbsp;|&nbsp; 📧 codivabuilders@gmail.com &nbsp;|&nbsp; 📱 @CodivaBuilders</p>
         </div>
         <div className={styles.footer}>© 2026 Codiva Builders (Subsidiary of Veleon Academy). All rights reserved.</div>
       </footer>
