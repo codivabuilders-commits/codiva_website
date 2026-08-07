@@ -34,13 +34,82 @@ export default function EnrollmentForm({ isOpen, onClose }: EnrollmentFormProps)
   const [savedRegistration, setSavedRegistration] = useState<any>(null);
   const [isDownloading, setIsDownloading] = useState(false);
 
+  // Promo code state
+  const [promoInput, setPromoInput] = useState('');
+  const [appliedPromo, setAppliedPromo] = useState<any>(null);
+  const [promoError, setPromoError] = useState('');
+  const [promoSuccess, setPromoSuccess] = useState('');
+  const [validatingPromo, setValidatingPromo] = useState(false);
+
   const basePricePerChild = 40000;
   const childCount = children.length;
   const rawSubtotal = childCount * basePricePerChild;
   const discountPercentage = childCount >= 2 ? 0.2 : 0;
-  const discountAmount = rawSubtotal * discountPercentage;
-  const finalTotal = rawSubtotal - discountAmount;
-  const hasDiscount = childCount >= 2;
+  const multiChildDiscount = rawSubtotal * discountPercentage;
+  const subtotalAfterMultiChild = rawSubtotal - multiChildDiscount;
+
+  const promoDiscount = appliedPromo ? Number(appliedPromo.discountAmount) || 0 : 0;
+  const totalDiscountAmount = multiChildDiscount + promoDiscount;
+  const finalTotal = Math.max(0, subtotalAfterMultiChild - promoDiscount);
+  const hasDiscount = childCount >= 2 || appliedPromo !== null;
+
+  const handleApplyPromo = async () => {
+    if (!promoInput.trim()) {
+      setPromoError('Please enter a promo code');
+      setPromoSuccess('');
+      return;
+    }
+
+    setValidatingPromo(true);
+    setPromoError('');
+    setPromoSuccess('');
+
+    try {
+      let res;
+      const body = {
+        code: promoInput.trim(),
+        cartSubtotal: subtotalAfterMultiChild,
+        program: children[0]?.course || 'General Program',
+        parentEmail: parentEmail.trim(),
+      };
+
+      try {
+        res = await fetch(`${API_BASE_URL}/api/promotions/validate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+      } catch (e) {
+        res = await fetch('/api/promotions/validate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+      }
+
+      const data = await res.json();
+      if (res.ok && data.valid) {
+        setAppliedPromo(data);
+        setPromoSuccess(`Promo Applied: ${data.code} (-₦${Number(data.discountAmount).toLocaleString()})`);
+        setPromoError('');
+      } else {
+        setAppliedPromo(null);
+        setPromoError(data.message || 'Invalid Promo Code');
+      }
+    } catch (err: any) {
+      setAppliedPromo(null);
+      setPromoError('Could not validate promo code. Please try again.');
+    } finally {
+      setValidatingPromo(false);
+    }
+  };
+
+  const handleRemovePromo = () => {
+    setAppliedPromo(null);
+    setPromoInput('');
+    setPromoSuccess('');
+    setPromoError('');
+  };
 
   const handleAddChild = () => {
     setChildren([...children, { name: '', age: '8', course: 'Scratch Coding', schedule: 'Weekend Saturday Classes' }]);
@@ -110,6 +179,7 @@ export default function EnrollmentForm({ isOpen, onClose }: EnrollmentFormProps)
       parentPhone,
       children,
       basePricePerChild,
+      promoCode: appliedPromo?.code,
       paymentMethod,
       paymentStatus: paymentMethod === 'Paystack' ? 'Paid' : 'Pending Payment',
       paymentReference: paymentRef || `CBD_ENR_${Date.now()}`,
@@ -140,7 +210,8 @@ export default function EnrollmentForm({ isOpen, onClose }: EnrollmentFormProps)
           parentPhone,
           children,
           finalTotal,
-          discountAmount,
+          discountAmount: totalDiscountAmount,
+          appliedPromo,
           paymentMethod,
           paymentStatus: payload.paymentStatus,
           reference: payload.paymentReference,
@@ -158,7 +229,7 @@ export default function EnrollmentForm({ isOpen, onClose }: EnrollmentFormProps)
         parentPhone,
         children,
         finalTotal,
-        discountAmount,
+        discountAmount: totalDiscountAmount,
         paymentMethod,
         paymentStatus: payload.paymentStatus,
         reference: payload.paymentReference,
@@ -497,29 +568,74 @@ export default function EnrollmentForm({ isOpen, onClose }: EnrollmentFormProps)
                 <FaPlus /> Add Another Child (Save 20%)
               </button>
 
+              {/* Promo Code Input Section */}
+              <div className={styles.sectionHeader} style={{ marginTop: '1.5rem' }}>
+                <span>Promo / Special Discount Code</span>
+              </div>
+
+              <div className={styles.formRow} style={{ alignItems: 'flex-start' }}>
+                <div className={styles.formGroup} style={{ flex: 1 }}>
+                  <input
+                    type="text"
+                    placeholder="Enter Promo Code (e.g. WELCOME20)"
+                    className={styles.input}
+                    value={promoInput}
+                    onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
+                    disabled={appliedPromo !== null}
+                  />
+                </div>
+                {appliedPromo ? (
+                  <button type="button" onClick={handleRemovePromo} className={styles.btnPayLater} style={{ padding: '0.65rem 1rem', background: '#fee2e2', color: '#991b1b', border: '1px solid #fca5a5' }}>
+                    Remove
+                  </button>
+                ) : (
+                  <button type="button" onClick={handleApplyPromo} disabled={validatingPromo} className={styles.btnAddChild} style={{ padding: '0.65rem 1.25rem', marginTop: 0 }}>
+                    {validatingPromo ? 'Validating...' : 'Apply'}
+                  </button>
+                )}
+              </div>
+
+              {promoSuccess && (
+                <div style={{ color: '#16a34a', backgroundColor: '#f0fdf4', padding: '0.5rem 0.75rem', borderRadius: '6px', fontSize: '0.85rem', marginBottom: '1rem', border: '1px solid #bbf7d0', fontWeight: 600 }}>
+                  ✓ {promoSuccess}
+                </div>
+              )}
+
+              {promoError && (
+                <div style={{ color: '#dc2626', backgroundColor: '#fef2f2', padding: '0.5rem 0.75rem', borderRadius: '6px', fontSize: '0.85rem', marginBottom: '1rem', border: '1px solid #fecaca' }}>
+                  ⚠️ {promoError}
+                </div>
+              )}
+
               {/* Dynamic Fee & Discount Card */}
               <div className={styles.pricingCard}>
                 <div className={styles.pricingRow}>
-                  <span>Fee per Child:</span>
-                  <span>₦{basePricePerChild.toLocaleString()}</span>
-                </div>
-                <div className={styles.pricingRow}>
-                  <span>Enrolled Children:</span>
-                  <span>{childCount} {childCount === 1 ? 'child' : 'children'}</span>
+                  <span>Subtotal ({childCount} {childCount === 1 ? 'child' : 'children'}):</span>
+                  <span>₦{rawSubtotal.toLocaleString()}</span>
                 </div>
 
-                {hasDiscount && (
+                {multiChildDiscount > 0 && (
                   <div className={`${styles.pricingRow} ${styles.discountRow}`}>
                     <span>
                       Multi-child Discount (20% Off Each):
                       <span className={styles.discountBadge}>20% OFF</span>
                     </span>
-                    <span>-₦{discountAmount.toLocaleString()}</span>
+                    <span>-₦{multiChildDiscount.toLocaleString()}</span>
+                  </div>
+                )}
+
+                {appliedPromo && (
+                  <div className={`${styles.pricingRow} ${styles.discountRow}`}>
+                    <span>
+                      Promo Code ({appliedPromo.code}):
+                      <span className={styles.discountBadge}>{appliedPromo.discountType === 'percentage' ? `${appliedPromo.discountValue}% OFF` : 'FIXED'}</span>
+                    </span>
+                    <span>-₦{promoDiscount.toLocaleString()}</span>
                   </div>
                 )}
 
                 <div className={`${styles.pricingRow} ${styles.totalRow}`}>
-                  <span>Total Investment:</span>
+                  <span>Amount Payable:</span>
                   <span>₦{finalTotal.toLocaleString()}</span>
                 </div>
               </div>

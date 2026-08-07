@@ -60,14 +60,83 @@ export default function SummerRegistrationForm() {
   const [savedRegistration, setSavedRegistration] = useState<any>(null);
   const [isDownloading, setIsDownloading] = useState(false);
 
+  // Promo code state
+  const [promoInput, setPromoInput] = useState('');
+  const [appliedPromo, setAppliedPromo] = useState<any>(null);
+  const [promoError, setPromoError] = useState('');
+  const [promoSuccess, setPromoSuccess] = useState('');
+  const [validatingPromo, setValidatingPromo] = useState(false);
+
   // Dynamic Pricing Engine (₦50,000 flat per child base)
   const basePricePerChild = 50000;
   const childCount = children.length;
   const rawSubtotal = childCount * basePricePerChild;
   const discountPercentage = childCount >= 2 ? 0.2 : 0;
-  const discountAmount = rawSubtotal * discountPercentage;
-  const finalTotal = rawSubtotal - discountAmount;
-  const hasDiscount = childCount >= 2;
+  const multiChildDiscount = rawSubtotal * discountPercentage;
+  const subtotalAfterMultiChild = rawSubtotal - multiChildDiscount;
+
+  const promoDiscount = appliedPromo ? Number(appliedPromo.discountAmount) || 0 : 0;
+  const totalDiscountAmount = multiChildDiscount + promoDiscount;
+  const finalTotal = Math.max(0, subtotalAfterMultiChild - promoDiscount);
+  const hasDiscount = childCount >= 2 || appliedPromo !== null;
+
+  const handleApplyPromo = async () => {
+    if (!promoInput.trim()) {
+      setPromoError('Please enter a promo code');
+      setPromoSuccess('');
+      return;
+    }
+
+    setValidatingPromo(true);
+    setPromoError('');
+    setPromoSuccess('');
+
+    try {
+      let res;
+      const body = {
+        code: promoInput.trim(),
+        cartSubtotal: subtotalAfterMultiChild,
+        program: 'Summer Innovation Academy 2026',
+        parentEmail: email.trim(),
+      };
+
+      try {
+        res = await fetch(`${API_BASE_URL}/api/promotions/validate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+      } catch (e) {
+        res = await fetch('/api/promotions/validate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+      }
+
+      const data = await res.json();
+      if (res.ok && data.valid) {
+        setAppliedPromo(data);
+        setPromoSuccess(`Promo Applied: ${data.code} (-₦${Number(data.discountAmount).toLocaleString()})`);
+        setPromoError('');
+      } else {
+        setAppliedPromo(null);
+        setPromoError(data.message || 'Invalid Promo Code');
+      }
+    } catch (err: any) {
+      setAppliedPromo(null);
+      setPromoError('Could not validate promo code. Please try again.');
+    } finally {
+      setValidatingPromo(false);
+    }
+  };
+
+  const handleRemovePromo = () => {
+    setAppliedPromo(null);
+    setPromoInput('');
+    setPromoSuccess('');
+    setPromoError('');
+  };
 
   const handleAddChild = () => {
     setChildren([...children, { name: '', age: '9', campus: 'Online / Virtual Campus' }]);
@@ -130,6 +199,7 @@ export default function SummerRegistrationForm() {
       preferredCampus,
       agreeUpdates,
       basePricePerChild,
+      promoCode: appliedPromo?.code,
       paymentMethod,
       paymentStatus: paymentMethod === 'Paystack' ? 'Paid' : 'Pending Payment',
       paymentReference: paymentRef || `CBD_SUMMER_${Date.now()}`,
@@ -160,7 +230,8 @@ export default function SummerRegistrationForm() {
           email,
           children: processedChildren,
           finalTotal,
-          discountAmount,
+          discountAmount: totalDiscountAmount,
+          appliedPromo,
           paymentMethod,
           paymentStatus: payload.paymentStatus,
           reference: payload.paymentReference,
@@ -183,7 +254,7 @@ export default function SummerRegistrationForm() {
           schedule: c.campus,
         })),
         finalTotal,
-        discountAmount,
+        discountAmount: totalDiscountAmount,
         paymentMethod,
         paymentStatus: paymentMethod === 'Paystack' ? 'Paid' : 'Pending Payment',
         reference: paymentRef || `CBD_SUMMER_${Date.now()}`,
@@ -555,22 +626,65 @@ export default function SummerRegistrationForm() {
                 />
               </div>
 
+              {/* Promo Code Input Section */}
+              <div style={{ marginTop: '1.25rem' }}>
+                <label className={styles.label}>Promo / Discount Code</label>
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  <input
+                    type="text"
+                    placeholder="Enter Promo Code (e.g. WELCOME20)"
+                    className={styles.input}
+                    value={promoInput}
+                    onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
+                    disabled={appliedPromo !== null}
+                  />
+                  {appliedPromo ? (
+                    <button type="button" onClick={handleRemovePromo} className={styles.btnSecondary} style={{ padding: '0.65rem 1rem', background: '#fee2e2', color: '#991b1b', border: '1px solid #fca5a5' }}>
+                      Remove
+                    </button>
+                  ) : (
+                    <button type="button" onClick={handleApplyPromo} disabled={validatingPromo} className={styles.btnSecondary} style={{ padding: '0.65rem 1.25rem', background: '#0A66C2', color: '#fff', fontWeight: 600 }}>
+                      {validatingPromo ? 'Validating...' : 'Apply'}
+                    </button>
+                  )}
+                </div>
+
+                {promoSuccess && (
+                  <div style={{ color: '#16a34a', backgroundColor: '#f0fdf4', padding: '0.4rem 0.65rem', borderRadius: '6px', fontSize: '0.82rem', marginTop: '0.5rem', border: '1px solid #bbf7d0', fontWeight: 600 }}>
+                    ✓ {promoSuccess}
+                  </div>
+                )}
+
+                {promoError && (
+                  <div style={{ color: '#dc2626', backgroundColor: '#fef2f2', padding: '0.4rem 0.65rem', borderRadius: '6px', fontSize: '0.82rem', marginTop: '0.5rem', border: '1px solid #fecaca' }}>
+                    ⚠️ {promoError}
+                  </div>
+                )}
+              </div>
+
               {/* Fee & Discount Summary */}
               <div style={{ background: '#fff7ed', border: '1.5px solid #fdba74', borderRadius: '12px', padding: '1rem', margin: '1rem 0' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', color: '#475569' }}>
-                  <span>Base Fee (₦50,000 × {childCount}):</span>
+                  <span>Subtotal ({childCount} {childCount === 1 ? 'child' : 'children'}):</span>
                   <span>₦{rawSubtotal.toLocaleString()}</span>
                 </div>
 
-                {hasDiscount && (
+                {multiChildDiscount > 0 && (
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', color: '#16a34a', fontWeight: 700, marginTop: '0.4rem' }}>
                     <span>Multi-child Discount (20% Off Each):</span>
-                    <span>-₦{discountAmount.toLocaleString()}</span>
+                    <span>-₦{multiChildDiscount.toLocaleString()}</span>
+                  </div>
+                )}
+
+                {appliedPromo && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', color: '#16a34a', fontWeight: 700, marginTop: '0.4rem' }}>
+                    <span>Promo Discount ({appliedPromo.code}):</span>
+                    <span>-₦{promoDiscount.toLocaleString()}</span>
                   </div>
                 )}
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.1rem', fontWeight: 800, borderTop: '1px dashed #fdba74', paddingTop: '0.5rem', marginTop: '0.5rem' }}>
-                  <span>Total Amount:</span>
+                  <span>Amount Payable:</span>
                   <span>₦{finalTotal.toLocaleString()}</span>
                 </div>
               </div>

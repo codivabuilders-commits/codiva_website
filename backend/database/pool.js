@@ -164,6 +164,66 @@ async function pingDatabase() {
     ALTER TABLE summer_registrations ADD COLUMN IF NOT EXISTS payment_reference VARCHAR(255);
   `);
 
+  // Ensure Codiva Builders promo_codes, promo_usages, special_pricings, discount_audit_logs exist
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS promo_codes (
+      id SERIAL PRIMARY KEY,
+      code VARCHAR(100) UNIQUE NOT NULL,
+      description TEXT,
+      discount_type VARCHAR(50) NOT NULL,
+      discount_value NUMERIC NOT NULL,
+      applies_to VARCHAR(255) DEFAULT 'All Programs',
+      min_purchase NUMERIC DEFAULT 0,
+      max_discount NUMERIC DEFAULT NULL,
+      usage_limit INT DEFAULT NULL,
+      usage_count INT DEFAULT 0,
+      one_per_parent BOOLEAN DEFAULT false,
+      expiry_date TIMESTAMP WITH TIME ZONE DEFAULT NULL,
+      is_active BOOLEAN DEFAULT true,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    );
+
+    CREATE TABLE IF NOT EXISTS promo_usages (
+      id SERIAL PRIMARY KEY,
+      promo_id INT REFERENCES promo_codes(id) ON DELETE CASCADE,
+      promo_code VARCHAR(100) NOT NULL,
+      parent_email VARCHAR(255) NOT NULL,
+      order_reference VARCHAR(255),
+      discount_amount NUMERIC NOT NULL,
+      used_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    );
+
+    CREATE TABLE IF NOT EXISTS special_pricings (
+      id SERIAL PRIMARY KEY,
+      token VARCHAR(100) UNIQUE NOT NULL,
+      parent_name VARCHAR(255) NOT NULL,
+      parent_email VARCHAR(255) NOT NULL,
+      parent_phone VARCHAR(50) NOT NULL,
+      program VARCHAR(255) NOT NULL,
+      num_children INT DEFAULT 1,
+      original_price NUMERIC NOT NULL,
+      override_price NUMERIC NOT NULL,
+      discount_amount NUMERIC NOT NULL,
+      reason TEXT,
+      expiry_date TIMESTAMP WITH TIME ZONE DEFAULT NULL,
+      status VARCHAR(50) DEFAULT 'Pending',
+      payment_method VARCHAR(50),
+      payment_reference VARCHAR(255),
+      paid_at TIMESTAMP WITH TIME ZONE DEFAULT NULL,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    );
+
+    CREATE TABLE IF NOT EXISTS discount_audit_logs (
+      id SERIAL PRIMARY KEY,
+      action VARCHAR(100) NOT NULL,
+      entity_type VARCHAR(50) NOT NULL,
+      entity_id VARCHAR(100),
+      details JSONB,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    );
+  `);
+
   console.log('[DB] Database tables & migrations applied successfully.');
 }
 
